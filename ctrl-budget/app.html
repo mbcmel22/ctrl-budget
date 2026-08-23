@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/styles.css?v=3">
 </head>
 <body>
 <a class="evite-lien" href="#vue">Aller au contenu</a>
@@ -23,8 +23,10 @@
     </a>
     <div class="app-menu">
       <button class="btn btn-sm" id="btnAjoutRapide" style="background:rgba(255,255,255,.14);color:#fff">+ Dépense</button>
-      <div class="avatar" id="avatar" aria-hidden="true">?</div>
-      <button class="icone-btn" id="btnDeconnexion" style="color:#fff" aria-label="Se déconnecter" title="Se déconnecter">⏻</button>
+      <button class="btn btn-sm btn-profil" id="btnProfil" title="Mon profil">
+        <span class="avatar" id="avatar">?</span>
+        <span class="etiquette-profil">Mon profil</span>
+      </button>
     </div>
   </div>
 </header>
@@ -35,7 +37,7 @@
     <button class="onglet" data-vue="charges">Charges fixes</button>
     <button class="onglet" data-vue="depenses">Dépenses</button>
     <button class="onglet" data-vue="credits">Crédits</button>
-    <button class="onglet" data-vue="reglages">Réglages</button>
+    <button class="onglet" data-vue="reglages">Mon profil</button>
   </div>
 </nav>
 
@@ -51,7 +53,7 @@
 
 <button class="haut" id="retourHaut" type="button" aria-label="Remonter en haut de la page">↑</button>
 
-<script type="module" src="/assets/js/ui.js"></script>
-<script type="module" src="/assets/js/app.js"></script>
+<script type="module" src="/assets/js/ui.js?v=3"></script>
+<script type="module" src="/assets/js/app.js?v=3"></script>
 </body>
 </html>

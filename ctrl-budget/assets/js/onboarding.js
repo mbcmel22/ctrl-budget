@@ -60,9 +60,10 @@ function etape1() {
     <label class="depot" for="fichierImport" id="zoneDepot">
       <span class="depot-icone">📄</span>
       <strong>Choisir un fichier</strong>
-      <span class="aide" style="margin:4px 0 0">ou glissez-le ici. PDF, XLSX, CSV, DOCX, 5 Mo maximum.</span>
+      <span class="aide" style="margin:4px 0 0">ou glissez-le ici. PDF, Excel, CSV, Word, 5 Mo maximum.</span>
     </label>
-    <input type="file" id="fichierImport" accept=".pdf,.xlsx,.xls,.csv,.txt,.docx" hidden>
+    <input type="file" id="fichierImport" hidden
+      accept=".pdf,.xlsx,.xls,.csv,.txt,.docx,application/pdf,text/csv,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
     <div id="etatImport" aria-live="polite"></div>
 
     <p class="aide" style="margin-top:14px">Pas de fichier sous la main ? Continuez, la saisie se fait en deux écrans.</p>
@@ -362,6 +363,7 @@ function brancher() {
   if (champFichier) {
     champFichier.onchange = () => { if (champFichier.files[0]) importer(champFichier.files[0]); };
     const depot = q('#zoneDepot');
+    depot.addEventListener('click', (ev) => { ev.preventDefault(); champFichier.click(); });
     ['dragenter', 'dragover'].forEach((e) => depot.addEventListener(e, (ev) => {
       ev.preventDefault(); depot.classList.add('survol');
     }));

@@ -16,8 +16,8 @@
      n'y avez accès.
    ========================================================================= */
 
-export const SUPABASE_URL = 'https://toorvoldfgavojpsmifi.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvb3J2b2xkZmdhdm9qcHNtaWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MDY1NDIsImV4cCI6MjEwMzA4MjU0Mn0.6u5WMB-Jg5C9sq2r5VILgrPgK-2uj7eh1tR9mewS5M0';
+export const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';
+export const SUPABASE_ANON_KEY = 'VOTRE_CLE_ANON_PUBLIC';
 
 /* Adresse du site en production, utilisée pour les liens de confirmation
    d'e-mail et de réinitialisation de mot de passe. */

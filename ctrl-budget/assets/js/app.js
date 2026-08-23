@@ -379,7 +379,15 @@ function vueCredits() {
 function vueReglages() {
   const revenus = etat.revenus;
   return `
-  ${titrePage('Réglages', 'Vos entrées d\'argent, votre compte et vos données')}
+  ${titrePage('Mon profil', 'Votre compte, vos entrées d\'argent et vos données')}
+
+  <div class="carte" style="margin-bottom:16px">
+    <div class="carte-titre"><h3>Compte</h3></div>
+    <div class="ligne-item" style="border:none;padding-top:0">
+      <span class="ligne-nom">${ech(etat.session.user.email)}<span class="ligne-meta">Connecté${etat.profil.prenom ? ' en tant que ' + ech(etat.profil.prenom) : ''}</span></span>
+      <span class="actions-ligne"><button class="btn btn-secondaire btn-sm" data-deconnexion>Se déconnecter</button></span>
+    </div>
+  </div>
 
   <div class="carte" style="margin-bottom:16px">
     <div class="carte-titre">
@@ -408,8 +416,11 @@ function vueReglages() {
 
   <div class="carte" style="margin-bottom:16px">
     <div class="carte-titre"><h3>Sécurité</h3></div>
-    <p class="aide" style="margin-bottom:14px">Connecté avec ${ech(etat.session.user.email)}. Votre mot de passe est stocké sous forme chiffrée par notre prestataire d'authentification, il n'est lisible par personne.</p>
-    <button class="btn btn-secondaire" data-changer-mdp>Changer de mot de passe</button>
+    <p class="aide" style="margin-bottom:14px">Votre mot de passe est stocké sous forme chiffrée par notre prestataire d'authentification, il n'est lisible par personne, pas même par l'éditeur du site.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-principal" data-changer-mdp>Changer de mot de passe</button>
+      <button class="btn btn-secondaire" data-deconnexion>Se déconnecter</button>
+    </div>
   </div>
 
   <div class="carte">
@@ -785,6 +796,14 @@ function brancher() {
   const changerMdp = vue.querySelector('[data-changer-mdp]');
   if (changerMdp) changerMdp.onclick = ouvrirMotDePasse;
 
+  vue.querySelectorAll('[data-deconnexion]').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      b.textContent = 'Déconnexion';
+      await deconnexion();
+    };
+  });
+
   const supprCompte = vue.querySelector('[data-supprimer-compte]');
   if (supprCompte) supprCompte.onclick = supprimerCompte;
 }
@@ -800,7 +819,11 @@ document.querySelectorAll('.onglet').forEach((b) => {
   b.onclick = () => { etat.onglet = b.dataset.vue; etat.filtreNature = 'tout'; rendre(); window.scrollTo({ top: 0 }); };
 });
 
-document.getElementById('btnDeconnexion').onclick = deconnexion;
+document.getElementById('btnProfil').onclick = () => {
+  etat.onglet = 'reglages';
+  rendre();
+  window.scrollTo({ top: 0 });
+};
 document.getElementById('btnAjoutRapide').onclick = () => ouvrirDepense(null);
 
 /* Raccourci clavier : touche « d » pour saisir une dépense */

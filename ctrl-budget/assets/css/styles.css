@@ -172,8 +172,8 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .nav-liens a { font-size: .93rem; font-weight: 500; text-decoration: none; color: var(--ardoise); }
 .nav-liens a:hover { color: var(--encre); }
 /* Les liens habillés en bouton gardent la couleur du bouton, pas celle du menu. */
-.nav-liens a.btn-principal { color: #fff; font-weight: 600; }
-.nav-liens a.btn-principal:hover { color: #fff; }
+header.entete .nav-liens a.btn.btn-principal { color: #fff; font-weight: 600; background: var(--encre); }
+header.entete .nav-liens a.btn.btn-principal:hover { color: #fff; background: var(--encre-90); }
 .nav-liens a.btn-secondaire { color: var(--encre); }
 
 /* ============================== Vitrine ================================= */
@@ -292,6 +292,16 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .app-entete .marque { color: #fff; }
 .app-entete .marque img { width: 26px; }
 .app-menu { display: flex; align-items: center; gap: 10px; }
+.btn-profil {
+  background: rgba(255, 255, 255, .14); color: #fff; gap: 8px; padding: 5px 14px 5px 5px;
+  border-radius: var(--r-full);
+}
+.btn-profil:hover { background: rgba(255, 255, 255, .24); }
+.etiquette-profil { font-size: .88rem; font-weight: 600; }
+@media (max-width: 520px) {
+  .etiquette-profil { display: none; }
+  .btn-profil { padding: 5px; }
+}
 .avatar {
   width: 34px; height: 34px; border-radius: var(--r-full); background: rgba(255, 255, 255, .15);
   display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: #fff;

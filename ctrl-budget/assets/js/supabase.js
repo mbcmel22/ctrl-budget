@@ -21,7 +21,19 @@ export async function sessionRequise() {
 }
 
 export async function deconnexion() {
-  await sb.auth.signOut();
+  /* La session locale est effacée quoi qu'il arrive : même si le serveur
+     ne répond pas, l'utilisateur ne doit pas rester bloqué connecté. */
+  try {
+    await Promise.race([
+      sb.auth.signOut(),
+      new Promise((r) => setTimeout(r, 3000))
+    ]);
+  } catch (erreur) {
+    console.warn('Déconnexion serveur impossible', erreur);
+  }
+  try {
+    await sb.auth.signOut({ scope: 'local' });
+  } catch (erreur) { /* session déjà effacée */ }
   window.location.replace('/');
 }
 
