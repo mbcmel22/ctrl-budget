@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon budget, CTRL Budget</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#16274a">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<a class="evite-lien" href="#vue">Aller au contenu</a>
+
+<header class="app-entete">
+  <div class="conteneur">
+    <a class="marque" href="/app.html">
+      <img src="/assets/img/icon-blanc.png" alt="" width="26" height="29">
+      <span><b>CTRL</b> Budget</span>
+    </a>
+    <div class="app-menu">
+      <button class="btn btn-sm" id="btnAjoutRapide" style="background:rgba(255,255,255,.14);color:#fff">+ Dépense</button>
+      <div class="avatar" id="avatar" aria-hidden="true">?</div>
+      <button class="icone-btn" id="btnDeconnexion" style="color:#fff" aria-label="Se déconnecter" title="Se déconnecter">⏻</button>
+    </div>
+  </div>
+</header>
+
+<nav class="onglets" aria-label="Sections de l'application">
+  <div class="conteneur">
+    <button class="onglet" data-vue="tableau" aria-current="page">Tableau de bord</button>
+    <button class="onglet" data-vue="charges">Charges fixes</button>
+    <button class="onglet" data-vue="depenses">Dépenses</button>
+    <button class="onglet" data-vue="credits">Crédits</button>
+    <button class="onglet" data-vue="reglages">Réglages</button>
+  </div>
+</nav>
+
+<main class="app" id="vue" tabindex="-1">
+  <div class="conteneur">
+    <div class="grille grille-2">
+      <div class="squelette" style="height:130px"></div>
+      <div class="squelette" style="height:130px"></div>
+    </div>
+    <div class="squelette" style="height:260px;margin-top:16px"></div>
+  </div>
+</main>
+
+<button class="haut" id="retourHaut" type="button" aria-label="Remonter en haut de la page">↑</button>
+
+<script type="module" src="/assets/js/ui.js"></script>
+<script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>

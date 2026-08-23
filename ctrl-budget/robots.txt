@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /mentions-legales.html
+Allow: /confidentialite.html
+Disallow: /app.html
+Disallow: /onboarding.html
+Disallow: /connexion.html

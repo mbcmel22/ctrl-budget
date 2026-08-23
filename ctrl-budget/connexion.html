@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion, CTRL Budget</title>
+<meta name="description" content="Accédez à votre budget CTRL Budget ou créez votre compte en une minute.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#16274a">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<div class="page-auth">
+
+  <aside class="auth-visuel">
+    <a class="marque" href="/" style="color:#fff">
+      <img src="/assets/img/icon-blanc.png" alt="" width="30" height="33">
+      <span><b>CTRL</b> Budget</span>
+    </a>
+    <div>
+      <h2>Le mois commence, votre budget aussi.</h2>
+      <p>Charges fixes, crédits, abonnements et dépenses du quotidien. Un seul écran pour savoir ce qu'il vous reste réellement.</p>
+    </div>
+    <p style="font-size:.85rem;color:#9fb3d9;margin:0">Votre mot de passe est chiffré à l'inscription. Personne, pas même l'éditeur du site, ne peut le lire.</p>
+  </aside>
+
+  <main class="auth-form">
+    <div class="auth-boite">
+
+      <div class="onglets-auth" role="tablist" aria-label="Connexion ou inscription">
+        <button role="tab" id="ongletConnexion" aria-selected="true" type="button">Se connecter</button>
+        <button role="tab" id="ongletInscription" aria-selected="false" type="button">Créer un compte</button>
+      </div>
+
+      <h1 id="titreAuth" style="font-size:1.6rem">Bon retour</h1>
+      <p id="sousTitreAuth" class="aide" style="margin-bottom:22px">Entrez vos identifiants pour retrouver votre tableau de bord.</p>
+
+      <div id="messageAuth" role="alert" aria-live="assertive"></div>
+
+      <form id="formAuth" novalidate autocomplete="on">
+        <div class="champ">
+          <label for="email">Adresse e-mail</label>
+          <input type="email" id="email" name="email" autocomplete="email" required inputmode="email" placeholder="prenom@exemple.fr" maxlength="120">
+        </div>
+
+        <div class="champ">
+          <label for="motdepasse">Mot de passe</label>
+          <div style="position:relative">
+            <input type="password" id="motdepasse" name="password" autocomplete="current-password" required minlength="10" maxlength="72" placeholder="Au moins 10 caractères" style="padding-right:76px">
+            <button type="button" id="voirMdp" class="btn-fantome" style="position:absolute;right:4px;top:50%;transform:translateY(-50%)">Voir</button>
+          </div>
+          <div class="force" id="forceMdp" hidden><i></i></div>
+          <p class="aide" id="aideMdp" hidden>10 caractères minimum, avec au moins une lettre et un chiffre. Une phrase de passe est plus sûre qu'un mot court et compliqué.</p>
+        </div>
+
+        <div class="champ" id="blocPrenom" hidden>
+          <label for="prenom">Prénom</label>
+          <input type="text" id="prenom" name="given-name" autocomplete="given-name" maxlength="40" placeholder="Pour personnaliser votre tableau de bord">
+        </div>
+
+        <div class="champ" id="blocConsentement" hidden>
+          <label class="case">
+            <input type="checkbox" id="consentement">
+            <span>J'accepte que mes données budgétaires soient enregistrées pour faire fonctionner l'application, comme décrit dans la <a href="/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-principal btn-bloc" id="btnAuth">Se connecter</button>
+      </form>
+
+      <p style="text-align:center;margin-top:18px">
+        <button type="button" class="btn-fantome" id="lienOubli">Mot de passe oublié</button>
+      </p>
+
+      <p class="aide" style="text-align:center;margin-top:24px">
+        <a href="/">Retour à l'accueil</a>
+      </p>
+    </div>
+  </main>
+</div>
+
+<button class="haut" id="retourHaut" type="button" aria-label="Remonter en haut de la page">↑</button>
+
+<script type="module" src="/assets/js/ui.js"></script>
+<script type="module" src="/assets/js/connexion.js"></script>
+</body>
+</html>

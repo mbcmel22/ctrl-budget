@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTRL Budget, gardez la main sur vos dépenses du mois</title>
+<meta name="description" content="CTRL Budget calcule votre reste à vivre en temps réel : charges fixes, crédits, abonnements et dépenses du quotidien réunis sur un seul tableau de bord.">
+<meta name="theme-color" content="#16274a">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://ctrl-budget.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CTRL Budget">
+<meta property="og:description" content="Vos charges fixes, vos crédits et votre reste à vivre, à jour en permanence.">
+<meta property="og:image" content="/assets/img/logo.png">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<a class="evite-lien" href="#contenu">Aller au contenu</a>
+
+<header class="entete">
+  <div class="conteneur entete-inner">
+    <a class="marque" href="/">
+      <img src="/assets/img/icon.png" alt="" width="30" height="33">
+      <span><b>CTRL</b> Budget</span>
+    </a>
+    <nav class="nav-liens" aria-label="Navigation principale">
+      <a href="#fonctions" class="lien-secondaire">Fonctions</a>
+      <a href="#etapes" class="lien-secondaire">Comment ça marche</a>
+      <a href="/connexion.html" class="btn btn-principal btn-sm">Ouvrir mon budget</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+
+  <section class="heros">
+    <div class="conteneur heros-grille">
+      <div>
+        <span class="eyebrow">Budget personnel</span>
+        <h1>Vous savez ce que vous gagnez. Sachez <em>ce qu'il vous reste</em>.</h1>
+        <p class="accroche">Vos charges fixes, vos crédits, vos abonnements et vos dépenses du quotidien au même endroit. CTRL Budget met à jour votre reste à vivre à chaque saisie, sans tableur et sans connecter votre banque.</p>
+        <div class="heros-actions">
+          <a href="/connexion.html?mode=inscription" class="btn btn-principal">Créer mon compte</a>
+          <a href="#fonctions" class="btn btn-secondaire">Voir les fonctions</a>
+        </div>
+        <div class="rassurance">
+          <span>🔒 Mot de passe chiffré, jamais lisible</span>
+          <span>🇪🇺 Données hébergées dans l'Union européenne</span>
+          <span>Aucun accès bancaire</span>
+        </div>
+      </div>
+
+      <div class="regle" aria-label="Exemple de répartition du mois">
+        <div class="regle-entete">
+          <div>
+            <p class="label">Reste à vivre, août</p>
+            <div class="regle-total">216,03 €</div>
+          </div>
+          <span class="evolution baisse">▼ 12 % vs juillet</span>
+        </div>
+        <div class="barre">
+          <div class="barre-seg seg-charges" style="width:73%"></div>
+          <div class="barre-seg seg-depenses" style="width:18%"></div>
+          <div class="barre-seg seg-reste" style="width:9%"></div>
+          <div class="barre-curseur" style="left:74%" data-jour="jour 23"></div>
+        </div>
+        <div class="legende">
+          <span><i class="pastille" style="background:var(--encre)"></i> Charges fixes 1 644 €</span>
+          <span><i class="pastille" style="background:#6f86b8"></i> Dépensé 402 €</span>
+          <span><i class="pastille" style="background:var(--menthe-fond);border:1px solid var(--ligne)"></i> Reste 216 €</span>
+        </div>
+        <p class="aide" style="margin-top:16px">Le trait rouge indique où vous en êtes dans le mois. S'il dépasse la zone verte, le rythme est trop rapide.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="fonctions">
+    <div class="conteneur">
+      <div class="section-titre">
+        <h2>Tout ce qui sort de votre compte, à sa place</h2>
+        <p>Un poste de dépense mal classé, c'est un budget faux. CTRL Budget classe automatiquement chaque charge et vous laissez la main sur tout.</p>
+      </div>
+      <div class="grille grille-3">
+        <div class="fonction">
+          <span class="fonction-icone">🏷️</span>
+          <h3>Classement automatique</h3>
+          <p>Tapez « Netflix », la charge devient un abonnement. Tapez « prêt voiture », elle devient un crédit avec sa date de fin. Vous pouvez tout modifier en un clic.</p>
+        </div>
+        <div class="fonction">
+          <span class="fonction-icone">🧮</span>
+          <h3>Reste à vivre en direct</h3>
+          <p>Revenus moins charges du mois moins dépenses déjà saisies. Le chiffre bouge à chaque ajout, y compris depuis le téléphone en caisse.</p>
+        </div>
+        <div class="fonction">
+          <span class="fonction-icone">🏦</span>
+          <h3>Vue crédits</h3>
+          <p>Mensualités, dates de fin, capital restant estimé et taux d'endettement. Vous voyez le mois où chaque crédit libère du budget.</p>
+        </div>
+        <div class="fonction">
+          <span class="fonction-icone">📈</span>
+          <h3>Comparaison avec le mois dernier</h3>
+          <p>Une courbe cumulée du mois en cours superposée au mois précédent, jour par jour. Vous voyez le dérapage avant la fin du mois.</p>
+        </div>
+        <div class="fonction">
+          <span class="fonction-icone">🔔</span>
+          <h3>Alertes utiles</h3>
+          <p>Abonnement qui se termine, engagement qui repart, dépenses plus rapides que d'habitude, projection de fin de mois dans le rouge.</p>
+        </div>
+        <div class="fonction">
+          <span class="fonction-icone">📤</span>
+          <h3>Vos données restent les vôtres</h3>
+          <p>Export CSV à tout moment et suppression complète du compte en deux clics, conformément au RGPD.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-claire" id="etapes">
+    <div class="conteneur">
+      <div class="section-titre">
+        <h2>Trois minutes de mise en route</h2>
+        <p>L'inscription vous guide poste par poste. Ensuite, vous ne saisissez plus que vos dépenses courantes.</p>
+      </div>
+      <div class="etape">
+        <div class="etape-num">1</div>
+        <div>
+          <h3>Vos entrées d'argent</h3>
+          <p>Salaire, primes, aides, revenus complémentaires. Une ligne récurrente ou ponctuelle, à vous de choisir.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="etape-num">2</div>
+        <div>
+          <h3>Vos charges fixes</h3>
+          <p>Loyer, énergie, assurances, crédits, abonnements. Chaque ligne reçoit une nature et une catégorie par défaut que vous pouvez corriger, plus une date de fin si c'est un engagement.</p>
+        </div>
+      </div>
+      <div class="etape">
+        <div class="etape-num">3</div>
+        <div>
+          <h3>Votre quotidien</h3>
+          <p>Courses, essence, sorties. Deux champs à remplir, et le reste à vivre se recalcule immédiatement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="conteneur">
+      <div class="bandeau-final">
+        <h2>Reprenez le contrôle ce mois-ci</h2>
+        <p>Gratuit, sans carte bancaire, sans connexion à votre banque. Vous saisissez, l'application calcule.</p>
+        <a href="/connexion.html?mode=inscription" class="btn btn-principal">Créer mon compte</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pied">
+  <div class="conteneur">
+    <div class="pied-grille">
+      <div>
+        <a class="marque" href="/" style="color:#fff">
+          <img src="/assets/img/icon-blanc.png" alt="" width="26" height="29">
+          <span><b>CTRL</b> Budget</span>
+        </a>
+        <p style="margin-top:12px;max-width:34ch">Le budget du mois, tenu simplement.</p>
+      </div>
+      <div>
+        <p><a href="/mentions-legales.html">Mentions légales</a></p>
+        <p><a href="/confidentialite.html">Confidentialité et RGPD</a></p>
+        <p><a href="/connexion.html">Se connecter</a></p>
+      </div>
+    </div>
+    <div class="pied-bas">© <span id="annee">2026</span> CTRL Budget. Application de gestion budgétaire personnelle, sans conseil en investissement.</div>
+  </div>
+</footer>
+
+<button class="haut" id="retourHaut" type="button" aria-label="Remonter en haut de la page">↑</button>
+
+<script src="/assets/js/ui.js" type="module"></script>
+</body>
+</html>

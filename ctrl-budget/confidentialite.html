@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité et RGPD, CTRL Budget</title>
+<meta name="description" content="Quelles données CTRL Budget enregistre, pourquoi, combien de temps, et comment exercer vos droits.">
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<header class="entete">
+  <div class="conteneur entete-inner">
+    <a class="marque" href="/"><img src="/assets/img/icon.png" alt="" width="30" height="33"><span><b>CTRL</b> Budget</span></a>
+    <nav class="nav-liens"><a href="/mentions-legales.html">Mentions légales</a><a href="/connexion.html" class="btn btn-principal btn-sm">Se connecter</a></nav>
+  </div>
+</header>
+
+<main class="page-texte">
+  <h1>Confidentialité et protection des données</h1>
+  <p class="aide">Dernière mise à jour : à compléter lors de la mise en ligne.</p>
+
+  <p>Cette page explique en clair ce que CTRL Budget enregistre et ce que vous pouvez exiger. Elle s'appuie sur le règlement européen 2016/679 (RGPD) et la loi Informatique et Libertés.</p>
+
+  <h2>Qui est responsable</h2>
+  <p>Le responsable de traitement est l'éditeur du site, identifié sur la page mentions légales. Il décide des finalités et des moyens du traitement.</p>
+
+  <h2>Ce qui est enregistré</h2>
+  <ul>
+    <li>Votre adresse e-mail et un mot de passe haché, pour créer et sécuriser votre compte.</li>
+    <li>Votre prénom, si vous le renseignez, pour personnaliser l'affichage.</li>
+    <li>Vos données budgétaires : entrées d'argent, charges fixes, crédits, dépenses, dates et catégories.</li>
+    <li>Des journaux techniques conservés par nos hébergeurs (adresse IP, horodatage), nécessaires à la sécurité du service.</li>
+  </ul>
+  <p>Aucune donnée bancaire n'est collectée. Le service ne se connecte à aucun compte bancaire et ne demande jamais vos identifiants bancaires. Aucune donnée n'est vendue ni cédée à des tiers.</p>
+
+  <h2>Pourquoi, et sur quelle base</h2>
+  <ul>
+    <li>Fournir le service que vous demandez : exécution du contrat, article 6.1.b du RGPD.</li>
+    <li>Sécuriser les comptes et prévenir les abus : intérêt légitime, article 6.1.f.</li>
+    <li>Enregistrer vos données budgétaires : votre consentement, recueilli à l'inscription, retirable à tout moment en supprimant votre compte.</li>
+  </ul>
+
+  <h2>Votre mot de passe</h2>
+  <p>Il est transmis en HTTPS puis haché par notre prestataire d'authentification (Supabase Auth, algorithme bcrypt). Le mot de passe en clair n'est enregistré nulle part, n'apparaît dans aucun fichier du site et ne peut être consulté ni par l'éditeur, ni par un administrateur. En cas d'oubli, la seule voie possible est la réinitialisation par e-mail.</p>
+
+  <h2>Qui héberge vos données</h2>
+  <ul>
+    <li>Supabase, pour la base de données et l'authentification, sur un projet situé dans l'Union européenne.</li>
+    <li>Vercel, pour la diffusion des pages du site.</li>
+  </ul>
+  <p>Ces prestataires agissent comme sous-traitants au sens de l'article 28 du RGPD. Les éventuels transferts hors Union européenne sont encadrés par les clauses contractuelles types de la Commission européenne.</p>
+
+  <h2>Combien de temps</h2>
+  <ul>
+    <li>Vos données budgétaires sont conservées tant que votre compte existe.</li>
+    <li>Un compte inactif depuis trois ans est supprimé après un e-mail de relance.</li>
+    <li>Les journaux techniques sont conservés au maximum douze mois.</li>
+    <li>La suppression du compte efface immédiatement et définitivement toutes vos lignes.</li>
+  </ul>
+
+  <h2>Cookies et stockage local</h2>
+  <p>Le site n'utilise ni cookie publicitaire, ni traceur de mesure d'audience. Un jeton de session est conservé dans le stockage local de votre navigateur, uniquement pour vous garder connecté. Ce stockage est strictement nécessaire au service, il est exempté de consentement selon les lignes directrices de la CNIL, et il disparaît à la déconnexion.</p>
+
+  <h2>Vos droits</h2>
+  <ul>
+    <li>Accès et portabilité : le bouton « Exporter toutes mes données » dans les réglages produit un fichier CSV lisible.</li>
+    <li>Rectification : toutes vos lignes sont modifiables depuis l'application.</li>
+    <li>Effacement : le bouton « Supprimer mon compte » efface tout, sans délai ni intervention humaine.</li>
+    <li>Opposition et limitation : écrivez à l'adresse de contact indiquée dans les mentions légales.</li>
+  </ul>
+  <p>Vous pouvez introduire une réclamation auprès de la CNIL, 3 place de Fontenoy, 75007 Paris, ou sur cnil.fr.</p>
+
+  <h2>Sécurité</h2>
+  <ul>
+    <li>Chiffrement HTTPS obligatoire sur toutes les pages.</li>
+    <li>Cloisonnement des données par utilisateur au niveau de la base, chaque ligne étant filtrée par l'identifiant du compte connecté.</li>
+    <li>En-têtes de sécurité stricts contre l'injection de contenu et l'affichage du site dans un cadre externe.</li>
+    <li>Limitation des tentatives de connexion et exigence d'un mot de passe d'au moins dix caractères.</li>
+  </ul>
+  <p>En cas de violation de données présentant un risque pour vos droits, vous serez informé et la CNIL sera notifiée dans les 72 heures, conformément aux articles 33 et 34 du RGPD.</p>
+
+  <p style="margin-top:32px"><a href="/">Retour à l'accueil</a></p>
+</main>
+
+<button class="haut" id="retourHaut" type="button" aria-label="Remonter en haut de la page">↑</button>
+<script type="module" src="/assets/js/ui.js"></script>
+</body>
+</html>
