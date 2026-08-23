@@ -26,6 +26,7 @@ ctrl-budget/
         ├── config.js       ⚠️ les 2 valeurs à remplacer
         ├── supabase.js     client et session
         ├── helpers.js      calculs, classement automatique, export
+        ├── import-fichier.js lecture PDF, Excel, CSV, Word à l'inscription
         ├── charts.js       graphiques SVG
         ├── ui.js           toasts, modales, retour en haut
         ├── connexion.js

@@ -93,23 +93,35 @@ const REGLES = [
   { mots: ['vattenfall', 'edf', 'engie', 'total energies', 'ekwateur', 'electricite', 'électricité', 'gaz', 'eau', 'veolia', 'saur', 'suez'], categorie: 'energie', nature: 'fixe' },
   { mots: ['bouygues', 'orange', 'sfr', 'free', 'sosh', 'red by', 'internet', 'fibre', 'mobile', 'box', 'forfait'], categorie: 'telecom', nature: 'abonnement' },
   { mots: ['assurance', 'mutuelle', 'prevoyance', 'prévoyance', 'maif', 'macif', 'axa', 'matmut', 'gmf', 'accident', 'habitation', 'automobile', 'auto', 'moto', 'deces', 'décès'], categorie: 'assurance', nature: 'fixe' },
-  { mots: ['netflix', 'spotify', 'deezer', 'disney', 'canal', 'prime video', 'apple', 'youtube', 'claude', 'chatgpt', 'openai', 'adobe', 'icloud', 'abonnement', 'revolut', 'basic fit', 'basicfit', 'salle de sport', 'fitness', 'gym'], categorie: 'loisirs', nature: 'abonnement' },
+  { mots: ['netflix', 'spotify', 'deezer', 'disney', 'canal', 'prime video', 'apple', 'youtube', 'claude', 'chatgpt', 'openai', 'adobe', 'icloud', 'abonnement', 'basic fit', 'basicfit', 'salle de sport', 'fitness', 'gym'], categorie: 'loisirs', nature: 'abonnement' },
   { mots: ['courses', 'alimentation', 'drive', 'carrefour', 'leclerc', 'lidl', 'intermarche', 'auchan', 'super u', 'aldi', 'boulangerie', 'restaurant', 'cantine'], categorie: 'alimentation', nature: 'variable' },
   { mots: ['sncf', 'essence', 'carburant', 'peage', 'péage', 'parking', 'bus', 'tram', 'navigo', 'train', 'entretien voiture', 'garage'], categorie: 'transport', nature: 'fixe' },
   { mots: ['epargne', 'épargne', 'livret', 'investir', 'invest', 'pea', 'bourse', 'per', 'assurance vie', 'trade republic', 'boursorama invest'], categorie: 'epargne', nature: 'epargne' },
   { mots: ['impot', 'impôt', 'taxe', 'urssaf', 'tresor public', 'trésor public'], categorie: 'impots', nature: 'fixe' },
-  { mots: ['cotisation', 'frais bancaire', 'frais de tenue', 'banque', 'carte bancaire', 'agios'], categorie: 'banque', nature: 'fixe' },
+  { mots: ['cotisation', 'frais bancaire', 'frais de tenue', 'banque', 'carte bancaire', 'agios', 'revolut', 'n26', 'boursorama', 'cm'], categorie: 'banque', nature: 'fixe' },
   { mots: ['creche', 'crèche', 'nounou', 'ecole', 'école', 'garderie', 'periscolaire', 'pension'], categorie: 'enfants', nature: 'fixe' },
   { mots: ['pharmacie', 'medecin', 'médecin', 'dentiste', 'osteo', 'kine', 'optique', 'sante', 'santé'], categorie: 'sante', nature: 'variable' }
 ];
 
 const sansAccent = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
+/* La comparaison se fait sur des mots entiers : « automobile » ne doit pas
+   être reconnu comme « mobile », ni « prevoyance » comme « voyage ». */
+const cacheRegex = new Map();
+function contientMot(texte, mot) {
+  const propre = sansAccent(mot);
+  if (!cacheRegex.has(propre)) {
+    const echappe = propre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    cacheRegex.set(propre, new RegExp(`(^|[^a-z0-9])${echappe}s?([^a-z0-9]|$)`));
+  }
+  return cacheRegex.get(propre).test(texte);
+}
+
 export function deviner(libelle) {
   const t = sansAccent(libelle || '');
   if (!t.trim()) return { categorie: 'autre', nature: 'fixe' };
   for (const regle of REGLES) {
-    if (regle.mots.some((mot) => t.includes(sansAccent(mot)))) {
+    if (regle.mots.some((mot) => contientMot(t, mot))) {
       return { categorie: regle.categorie, nature: regle.nature };
     }
   }

@@ -171,6 +171,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .nav-liens { display: flex; align-items: center; gap: 26px; }
 .nav-liens a { font-size: .93rem; font-weight: 500; text-decoration: none; color: var(--ardoise); }
 .nav-liens a:hover { color: var(--encre); }
+/* Les liens habillés en bouton gardent la couleur du bouton, pas celle du menu. */
+.nav-liens a.btn-principal { color: #fff; font-weight: 600; }
+.nav-liens a.btn-principal:hover { color: #fff; }
+.nav-liens a.btn-secondaire { color: var(--encre); }
 
 /* ============================== Vitrine ================================= */
 
@@ -412,6 +416,17 @@ main.app { padding: 28px 0 90px; }
 }
 .suggestion:hover { border-style: solid; border-color: var(--encre); background: var(--brume-2); }
 .suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
+
+/* Zone de dépôt de fichier */
+.depot {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px;
+  border: 1.5px dashed var(--ardoise-clair); border-radius: var(--r-md); background: var(--brume);
+  padding: 26px 20px; cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+.depot:hover, .depot.survol { border-color: var(--encre); background: var(--brume-2); border-style: solid; }
+.depot strong { font-family: var(--display); font-size: 1rem; }
+.depot-icone { font-size: 1.6rem; }
+.depot .aide { margin: 0; }
 
 /* Graphiques */
 .graph { width: 100%; height: auto; display: block; overflow: visible; }

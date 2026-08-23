@@ -1,6 +1,7 @@
 import { sb, sessionRequise, messageErreur } from './supabase.js';
 import { toast, ech } from './ui.js';
 import { CATEGORIES, NATURES, TYPES_REVENU, deviner, euro, montantValide, nettoyerLibelle } from './helpers.js';
+import { extraireTexte, analyser } from './import-fichier.js';
 
 const zone = document.getElementById('etapeContenu');
 const progression = document.getElementById('progression');
@@ -9,7 +10,7 @@ let session = null;
 let etape = 1;
 const TOTAL = 4;
 
-const etat = { prenom: '', revenus: [], charges: [], objectif: 0 };
+const etat = { prenom: '', revenus: [], charges: [], objectif: 0, importe: null };
 
 const SUGGESTIONS_REVENUS = [
   { libelle: 'Salaire', type: 'salaire' },
@@ -52,6 +53,21 @@ function etape1() {
       <p class="aide">Utilisé uniquement pour l'accueil de votre tableau de bord.</p>
     </div>
   </div>
+  <div class="carte" style="margin-top:16px">
+    <div class="carte-titre"><h3>Vous tenez déjà un fichier ?</h3></div>
+    <p class="aide" style="margin-bottom:14px">Déposez votre relevé de charges au format PDF, Excel, CSV ou Word. Les libellés et les montants sont lus, classés, puis proposés à la vérification. Rien n'est enregistré tant que vous n'avez pas validé.</p>
+
+    <label class="depot" for="fichierImport" id="zoneDepot">
+      <span class="depot-icone">📄</span>
+      <strong>Choisir un fichier</strong>
+      <span class="aide" style="margin:4px 0 0">ou glissez-le ici. PDF, XLSX, CSV, DOCX, 5 Mo maximum.</span>
+    </label>
+    <input type="file" id="fichierImport" accept=".pdf,.xlsx,.xls,.csv,.txt,.docx" hidden>
+    <div id="etatImport" aria-live="polite"></div>
+
+    <p class="aide" style="margin-top:14px">Pas de fichier sous la main ? Continuez, la saisie se fait en deux écrans.</p>
+  </div>
+
   <div class="alerte alerte-info" style="margin-top:18px">
     Vous n'aurez jamais à connecter votre banque. Vous saisissez vos montants, l'application fait les calculs.
   </div>
@@ -64,6 +80,7 @@ function etape2() {
   const total = etat.revenus.reduce((t, r) => t + r.montant, 0);
   return `
   ${entete("Vos entrées d'argent", "Salaire, primes, aides, revenus complémentaires. Ajoutez chaque ligne qui alimente votre compte ce mois-ci.")}
+  ${bandeauImport('revenus')}
 
   <div class="suggestions">
     ${SUGGESTIONS_REVENUS.map((s) => `<button class="suggestion" data-sugg-revenu="${ech(s.libelle)}" data-type="${ech(s.type)}">+ ${ech(s.libelle)}</button>`).join('')}
@@ -95,6 +112,13 @@ function etape2() {
   </div>`;
 }
 
+function bandeauImport(quoi) {
+  if (!etat.importe) return '';
+  const n = quoi === 'charges' ? etat.importe.charges : etat.importe.revenus;
+  if (!n) return '';
+  return `<div class="alerte alerte-ok" style="margin-bottom:16px">${n} ligne${n > 1 ? 's importées' : ' importée'} depuis votre fichier. Vérifiez les montants et la nature, le crayon permet de corriger une ligne.</div>`;
+}
+
 function listeRevenus(total) {
   if (!etat.revenus.length) {
     return `<div class="carte vide" style="margin-top:16px"><strong>Aucune entrée pour l'instant</strong>Ajoutez au moins votre salaire pour que le reste à vivre ait un sens.</div>`;
@@ -107,7 +131,10 @@ function listeRevenus(total) {
         <li class="ligne-item">
           <span class="ligne-nom">${ech(r.libelle)}<span class="ligne-meta">${ech(TYPES_REVENU[r.type])} · ${r.recurrent ? 'tous les mois' : 'ce mois'}</span></span>
           <span class="ligne-montant">${ech(euro(r.montant))}</span>
-          <span class="actions-ligne"><button class="icone-btn" data-suppr-revenu="${i}" aria-label="Supprimer ${ech(r.libelle)}">✕</button></span>
+          <span class="actions-ligne">
+            <button class="icone-btn" data-edit-revenu="${i}" aria-label="Corriger ${ech(r.libelle)}">✎</button>
+            <button class="icone-btn" data-suppr-revenu="${i}" aria-label="Supprimer ${ech(r.libelle)}">✕</button>
+          </span>
         </li>`).join('')}
     </ul>
   </div>`;
@@ -117,6 +144,7 @@ function etape3() {
   const total = etat.charges.reduce((t, c) => t + c.montant, 0);
   return `
   ${entete('Vos charges fixes', "Tout ce qui part automatiquement chaque mois. La nature est proposée d'après le libellé, corrigez-la si besoin.")}
+  ${bandeauImport('charges')}
 
   <div class="suggestions">
     ${SUGGESTIONS_CHARGES.map((s) => `<button class="suggestion" data-sugg-charge="${ech(s)}">+ ${ech(s)}</button>`).join('')}
@@ -167,7 +195,10 @@ function listeCharges(total) {
             <span class="ligne-meta">${ech(CATEGORIES[c.categorie].libelle)}${c.date_fin ? ' · fin ' + ech(c.date_fin.slice(0, 7)) : ''}</span>
           </span>
           <span class="ligne-montant">${ech(euro(c.montant))}</span>
-          <span class="actions-ligne"><button class="icone-btn" data-suppr-charge="${i}" aria-label="Supprimer ${ech(c.libelle)}">✕</button></span>
+          <span class="actions-ligne">
+            <button class="icone-btn" data-edit-charge="${i}" aria-label="Corriger ${ech(c.libelle)}">✎</button>
+            <button class="icone-btn" data-suppr-charge="${i}" aria-label="Supprimer ${ech(c.libelle)}">✕</button>
+          </span>
         </li>`).join('')}
     </ul>
   </div>`;
@@ -249,6 +280,20 @@ function brancher() {
     b.onclick = () => { etat.revenus.splice(Number(b.dataset.supprRevenu), 1); afficher(); };
   });
 
+  zone.querySelectorAll('[data-edit-revenu]').forEach((b) => {
+    b.onclick = () => {
+      const [ligne] = etat.revenus.splice(Number(b.dataset.editRevenu), 1);
+      afficher();
+      const f = zone.querySelector('#rLibelle');
+      f.value = ligne.libelle;
+      zone.querySelector('#rMontant').value = ligne.montant;
+      zone.querySelector('#rType').value = ligne.type;
+      zone.querySelector('#rRecurrent').value = ligne.recurrent ? '1' : '0';
+      f.focus();
+      f.scrollIntoView({ block: 'center' });
+    };
+  });
+
   /* Étape charges */
   const libelleCharge = q('#cLibelle');
   if (libelleCharge) {
@@ -296,9 +341,82 @@ function brancher() {
     b.onclick = () => { etat.charges.splice(Number(b.dataset.supprCharge), 1); afficher(); };
   });
 
+  zone.querySelectorAll('[data-edit-charge]').forEach((b) => {
+    b.onclick = () => {
+      const [ligne] = etat.charges.splice(Number(b.dataset.editCharge), 1);
+      afficher();
+      const f = zone.querySelector('#cLibelle');
+      f.value = ligne.libelle;
+      zone.querySelector('#cMontant').value = ligne.montant;
+      zone.querySelector('#cNature').value = ligne.nature;
+      zone.querySelector('#cCategorie').value = ligne.categorie;
+      zone.querySelector('#cJour').value = ligne.jour_prelevement || '';
+      zone.querySelector('#cFin').value = (ligne.date_fin || '').slice(0, 7);
+      f.focus();
+      f.scrollIntoView({ block: 'center' });
+    };
+  });
+
+  /* Import de fichier */
+  const champFichier = q('#fichierImport');
+  if (champFichier) {
+    champFichier.onchange = () => { if (champFichier.files[0]) importer(champFichier.files[0]); };
+    const depot = q('#zoneDepot');
+    ['dragenter', 'dragover'].forEach((e) => depot.addEventListener(e, (ev) => {
+      ev.preventDefault(); depot.classList.add('survol');
+    }));
+    ['dragleave', 'drop'].forEach((e) => depot.addEventListener(e, (ev) => {
+      ev.preventDefault(); depot.classList.remove('survol');
+    }));
+    depot.addEventListener('drop', (ev) => {
+      const fichier = ev.dataTransfer?.files?.[0];
+      if (fichier) importer(fichier);
+    });
+  }
+
   /* Fin */
   const terminer = q('[data-terminer]');
   if (terminer) terminer.onclick = () => enregistrer(terminer);
+}
+
+/* ============================== Import de fichier ============================== */
+
+const TAILLE_MAX = 5 * 1024 * 1024;
+
+async function importer(fichier) {
+  const retour = zone.querySelector('#etatImport');
+  const message = (classe, texte) => { retour.innerHTML = `<div class="alerte ${classe}" style="margin-top:14px">${ech(texte)}</div>`; };
+
+  if (fichier.size > TAILLE_MAX) {
+    return message('alerte-danger', 'Ce fichier dépasse 5 Mo. Réduisez-le ou saisissez vos lignes à la main.');
+  }
+
+  message('alerte-info', `Lecture de ${fichier.name} en cours, cela prend quelques secondes.`);
+
+  try {
+    etat.prenom = nettoyerLibelle(zone.querySelector('#prenom').value) || etat.prenom;
+
+    const texte = await extraireTexte(fichier);
+    const resultat = analyser(texte);
+    const total = resultat.charges.length + resultat.revenus.length;
+
+    if (!total) {
+      return message('alerte-attention', "Aucune ligne exploitable trouvée. Si le PDF vient d'un scan, son texte n'est pas lisible : passez par la saisie manuelle, elle prend deux minutes.");
+    }
+
+    etat.charges = [...etat.charges, ...resultat.charges];
+    etat.revenus = [...etat.revenus, ...resultat.revenus];
+    etat.importe = { charges: resultat.charges.length, revenus: resultat.revenus.length };
+
+    toast(`${total} ligne${total > 1 ? 's' : ''} importée${total > 1 ? 's' : ''}`);
+    etape = 2;
+    afficher();
+  } catch (erreur) {
+    console.error(erreur);
+    message('alerte-danger', erreur.message && erreur.message.length < 120
+      ? erreur.message
+      : "Ce fichier n'a pas pu être lu. Vérifiez son format, ou saisissez vos lignes à la main.");
+  }
 }
 
 /* ============================== Enregistrement ============================== */
