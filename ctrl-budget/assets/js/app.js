@@ -108,7 +108,7 @@ function selecteurMois() {
 const titrePage = (titre, sousTitre, droite = '') => `
   <div class="app-titre">
     <div><h1>${ech(titre)}</h1><p>${ech(sousTitre)}</p></div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${droite}</div>
+    <div class="app-actions">${droite}</div>
   </div>`;
 
 const videHtml = (titre, texte) => `<div class="vide"><strong>${ech(titre)}</strong>${ech(texte)}</div>`;

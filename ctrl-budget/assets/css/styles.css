@@ -314,7 +314,7 @@ header.entete .nav-liens a.btn.btn-principal:hover { color: #fff; background: va
   position: sticky; top: 62px; z-index: 30; scrollbar-width: none;
 }
 .onglets::-webkit-scrollbar { display: none; }
-.onglets .conteneur { display: flex; gap: 4px; width: max-content; min-width: 100%; }
+.onglets .conteneur { display: flex; gap: 4px; }
 .onglet {
   border: none; background: transparent; padding: 16px 14px; font-family: var(--texte);
   font-size: .93rem; font-weight: 600; color: var(--ardoise); cursor: pointer; white-space: nowrap;
@@ -324,12 +324,16 @@ header.entete .nav-liens a.btn.btn-principal:hover { color: #fff; background: va
 .onglet:hover { color: var(--encre); }
 
 main.app { padding: 28px 0 90px; }
-.app-titre { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.app-titre { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+.app-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .app-titre h1 { font-size: 1.7rem; margin: 0; }
 .app-titre p { color: var(--ardoise); margin: 4px 0 0; font-size: .92rem; }
 
-.selecteur-mois { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--ligne); border-radius: var(--r-sm); padding: 4px; }
-.selecteur-mois button { border: none; background: transparent; width: 34px; height: 34px; border-radius: var(--r-xs); cursor: pointer; color: var(--ardoise); font-size: 1rem; }
+.selecteur-mois {
+  display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+  background: #fff; border: 1px solid var(--ligne); border-radius: var(--r-sm); padding: 4px;
+}
+.selecteur-mois button { border: none; background: transparent; width: 34px; height: 34px; border-radius: var(--r-xs); cursor: pointer; color: var(--ardoise); font-size: 1rem; flex: 0 0 auto; }
 .selecteur-mois button:hover { background: var(--brume-2); color: var(--encre); }
 .selecteur-mois strong { font-size: .92rem; min-width: 118px; text-align: center; text-transform: capitalize; }
 
@@ -403,8 +407,18 @@ main.app { padding: 28px 0 90px; }
   padding: 26px; max-height: 92vh; overflow-y: auto; animation: monte .22s cubic-bezier(.4, 0, .2, 1);
 }
 @keyframes monte { from { transform: translateY(24px); opacity: .5; } }
-.modale-entete { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.modale-entete h3 { margin: 0; }
+.modale-entete {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  position: sticky; top: -26px; z-index: 3; background: #fff;
+  padding: 4px 0 12px; margin: 0 0 16px; border-bottom: 1px solid var(--ligne);
+}
+.modale-entete h3 { margin: 0; font-size: 1.05rem; }
+/* La barre de validation reste visible même sur un formulaire long. */
+.modale .onb-actions {
+  position: sticky; bottom: -26px; z-index: 3; background: #fff;
+  margin: 18px 0 0; padding: 12px 0 4px; border-top: 1px solid var(--ligne);
+}
+.modale .onb-actions .btn { flex: 1; }
 
 /* Toast */
 .toast-zone { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; width: calc(100% - 32px); max-width: 420px; }
@@ -432,8 +446,8 @@ main.app { padding: 28px 0 90px; }
 /* Sélecteur de mois enrichi */
 .selecteur-label {
   font-family: var(--display); font-size: .95rem; font-weight: 700; letter-spacing: -.01em;
-  border: none; background: transparent; cursor: pointer; padding: 8px 12px; border-radius: var(--r-xs);
-  min-width: 128px; text-transform: capitalize; color: var(--encre);
+  border: none; background: transparent; cursor: pointer; padding: 8px 10px; border-radius: var(--r-xs);
+  min-width: 130px; width: auto; white-space: nowrap; text-transform: capitalize; color: var(--encre);
 }
 .selecteur-label:hover { background: var(--brume-2); }
 .nav-annee { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 18px; }
@@ -508,6 +522,11 @@ main.app { padding: 28px 0 90px; }
 
 /* ============================== Responsive ============================== */
 
+@media (max-width: 760px) {
+  /* Sur petit écran les onglets défilent, la largeur suit leur contenu. */
+  .onglets .conteneur { width: max-content; min-width: 100%; }
+}
+
 @media (max-width: 900px) {
   .heros-grille { grid-template-columns: 1fr; gap: 40px; }
   .page-auth { grid-template-columns: 1fr; }
@@ -526,6 +545,16 @@ main.app { padding: 28px 0 90px; }
   .bandeau-final { padding: 32px 20px; }
   .ligne-champs { grid-template-columns: 1fr; }
   .app-titre { align-items: flex-start; }
+  .app-titre > div:last-child, .app-actions { width: 100%; }
+  .selecteur-mois { flex: 1 1 auto; justify-content: space-between; }
+  .selecteur-label { flex: 1 1 auto; min-width: 0; font-size: .9rem; padding: 8px 4px; }
+  .app-actions .btn { flex: 1 1 auto; }
+  .modale { padding: 22px 18px; max-height: 90vh; }
+  .modale .champ { margin-bottom: 12px; }
+  .modale .aide { font-size: .78rem; margin-top: 4px; }
+  .modale .ligne-champs { gap: 10px; }
+  .modale-entete { top: -22px; }
+  .modale .onb-actions { bottom: -22px; }
   .regle { padding: 20px; }
   .regle-total { font-size: 1.6rem; }
   .ligne-item { grid-template-columns: 1fr auto; row-gap: 6px; }
