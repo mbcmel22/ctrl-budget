@@ -11,6 +11,9 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   prenom text check (char_length(prenom) <= 40),
   objectif_epargne numeric(10,2) not null default 0 check (objectif_epargne >= 0),
+  epargne_initiale numeric(12,2) not null default 0 check (epargne_initiale >= 0),
+  devise text not null default 'EUR' check (char_length(devise) = 3),
+  langue text not null default 'fr' check (langue in ('fr','en','es')),
   onboarding_done boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -68,11 +71,25 @@ create table if not exists public.depenses (
 );
 
 -- ---------------------------------------------------------------------
+-- 4 bis. Mouvements d'épargne manuels
+-- ---------------------------------------------------------------------
+create table if not exists public.epargne_mouvements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  libelle text check (char_length(libelle) <= 60),
+  montant numeric(12,2) not null check (montant >= 0 and montant <= 10000000),
+  sens text not null default 'depot' check (sens in ('depot','retrait')),
+  date date not null default current_date,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------
 -- 5. Index
 -- ---------------------------------------------------------------------
 create index if not exists idx_revenus_user on public.revenus(user_id);
 create index if not exists idx_charges_user on public.charges(user_id);
 create index if not exists idx_depenses_user_date on public.depenses(user_id, date desc);
+create index if not exists idx_epargne_user_date on public.epargne_mouvements(user_id, date desc);
 
 -- ---------------------------------------------------------------------
 -- 6. Sécurité au niveau des lignes (RLS)
@@ -84,6 +101,7 @@ alter table public.profiles enable row level security;
 alter table public.revenus  enable row level security;
 alter table public.charges  enable row level security;
 alter table public.depenses enable row level security;
+alter table public.epargne_mouvements enable row level security;
 
 drop policy if exists "profil lecture" on public.profiles;
 drop policy if exists "profil ecriture" on public.profiles;
@@ -96,7 +114,7 @@ create policy "profil maj"      on public.profiles for update using (auth.uid() 
 do $$
 declare t text;
 begin
-  foreach t in array array['revenus','charges','depenses'] loop
+  foreach t in array array['revenus','charges','depenses','epargne_mouvements'] loop
     execute format('drop policy if exists "lecture %1$s" on public.%1$I', t);
     execute format('drop policy if exists "ajout %1$s" on public.%1$I', t);
     execute format('drop policy if exists "maj %1$s" on public.%1$I', t);
@@ -151,6 +169,7 @@ begin
     raise exception 'Aucune session active';
   end if;
 
+  delete from public.epargne_mouvements where user_id = moi;
   delete from public.depenses where user_id = moi;
   delete from public.charges  where user_id = moi;
   delete from public.revenus  where user_id = moi;

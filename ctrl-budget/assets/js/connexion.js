@@ -1,5 +1,6 @@
 import { sb, messageErreur } from './supabase.js';
 import { toast, ech } from './ui.js';
+import { t, LANGUES, langueCourante, setLangue } from './i18n.js';
 
 const form = document.getElementById('formAuth');
 const email = document.getElementById('email');
@@ -13,6 +14,18 @@ const ongletInscription = document.getElementById('ongletInscription');
 const force = document.getElementById('forceMdp');
 const aideMdp = document.getElementById('aideMdp');
 
+/* Sélecteur de langue, avant même la création du compte. */
+const barreLangue = document.getElementById('barreLangue');
+function rendreLangues() {
+  if (!barreLangue) return;
+  barreLangue.innerHTML = Object.values(LANGUES)
+    .map((l) => `<button class="puce" data-langue="${l.code}" aria-pressed="${langueCourante() === l.code}">${ech(l.libelle)}</button>`)
+    .join('');
+  barreLangue.querySelectorAll('[data-langue]').forEach((b) => {
+    b.onclick = () => { setLangue(b.dataset.langue); rendreLangues(); appliquerMode(); };
+  });
+}
+
 let mode = new URLSearchParams(location.search).get('mode') === 'inscription' ? 'inscription' : 'connexion';
 let modeRecuperation = false;
 
@@ -21,11 +34,21 @@ function appliquerMode() {
   const inscription = mode === 'inscription';
   ongletConnexion.setAttribute('aria-selected', String(!inscription));
   ongletInscription.setAttribute('aria-selected', String(inscription));
-  document.getElementById('titreAuth').textContent = inscription ? 'Créer votre compte' : 'Bon retour';
-  document.getElementById('sousTitreAuth').textContent = inscription
-    ? 'Deux champs, et vous passez à la mise en route de votre budget.'
-    : 'Entrez vos identifiants pour retrouver votre tableau de bord.';
-  btn.textContent = inscription ? 'Créer mon compte' : 'Se connecter';
+  ongletConnexion.textContent = t('auth.signIn');
+  ongletInscription.textContent = t('auth.signUp');
+  document.getElementById('titreAuth').textContent = inscription ? t('auth.createTitle') : t('auth.welcomeBack');
+  document.getElementById('sousTitreAuth').textContent = inscription ? t('auth.createText') : t('auth.welcomeBackText');
+  btn.textContent = inscription ? t('auth.signUp') : t('auth.signIn');
+
+  document.querySelector('label[for="email"]').textContent = t('auth.email');
+  document.querySelector('label[for="motdepasse"]').textContent = t('auth.password');
+  mdp.placeholder = t('auth.passwordPlaceholder');
+  document.getElementById('voirMdp').textContent = mdp.type === 'password' ? t('auth.show') : t('auth.hide');
+  document.querySelector('label[for="prenom"]').textContent = t('prof.firstName');
+  document.getElementById('aideMdp').textContent = t('prof.passwordHelp');
+  document.getElementById('lienOubli').textContent = t('auth.forgot');
+  document.querySelector('.auth-visuel h2').textContent = t('auth.tagline');
+  document.querySelector('.auth-visuel p').textContent = t('auth.taglineText');
   document.getElementById('blocPrenom').hidden = !inscription;
   document.getElementById('blocConsentement').hidden = !inscription;
   force.hidden = !inscription;
@@ -40,7 +63,7 @@ ongletInscription.onclick = () => { mode = 'inscription'; appliquerMode(); };
 document.getElementById('voirMdp').onclick = (e) => {
   const visible = mdp.type === 'text';
   mdp.type = visible ? 'password' : 'text';
-  e.target.textContent = visible ? 'Voir' : 'Cacher';
+  e.target.textContent = visible ? t('auth.show') : t('auth.hide');
 };
 
 /* ------------------------- Force du mot de passe ------------------------- */
@@ -91,23 +114,23 @@ form.addEventListener('submit', async (e) => {
   const adresse = email.value.trim().toLowerCase();
   const secret = mdp.value;
 
-  if (!emailValide(adresse)) return afficherErreur("Cette adresse e-mail n'est pas valide.");
-  if (secret.length < 10) return afficherErreur('Le mot de passe doit contenir au moins 10 caractères.');
+  if (!emailValide(adresse)) return afficherErreur(t('auth.badEmail'));
+  if (secret.length < 10) return afficherErreur(t('auth.shortPassword'));
 
   if (mode === 'inscription') {
     if (!/[a-zA-Z]/.test(secret) || !/\d/.test(secret)) {
-      return afficherErreur('Ajoutez au moins une lettre et un chiffre à votre mot de passe.');
+      return afficherErreur(t('auth.needLetterDigit'));
     }
     if (evaluer(secret) <= 1) {
-      return afficherErreur('Ce mot de passe est trop courant. Choisissez une phrase de passe personnelle.');
+      return afficherErreur(t('auth.tooCommon'));
     }
     if (!consentement.checked) {
-      return afficherErreur('Cochez la case pour continuer, elle autorise l\'enregistrement de vos données budgétaires.');
+      return afficherErreur(t('auth.consentNeeded'));
     }
   }
 
   btn.disabled = true;
-  btn.textContent = mode === 'inscription' ? 'Création en cours' : 'Connexion en cours';
+  btn.textContent = mode === 'inscription' ? t('auth.creating') : t('auth.signingIn');
 
   try {
     if (mode === 'inscription') {
@@ -124,7 +147,7 @@ form.addEventListener('submit', async (e) => {
       if (data.session) {
         location.replace('/onboarding.html');
       } else {
-        afficherInfo('Compte créé. Ouvrez votre boîte e-mail et cliquez sur le lien de confirmation pour activer votre accès.');
+        afficherInfo(t('auth.checkEmail'));
         form.reset();
       }
     } else {
@@ -136,7 +159,7 @@ form.addEventListener('submit', async (e) => {
     afficherErreur(messageErreur(erreur));
   } finally {
     btn.disabled = false;
-    btn.textContent = mode === 'inscription' ? 'Créer mon compte' : 'Se connecter';
+    btn.textContent = mode === 'inscription' ? t('auth.signUp') : t('auth.signIn');
   }
 });
 
@@ -144,12 +167,12 @@ form.addEventListener('submit', async (e) => {
 document.getElementById('lienOubli').onclick = async () => {
   const adresse = email.value.trim().toLowerCase();
   if (!emailValide(adresse)) {
-    return afficherErreur('Entrez votre adresse e-mail dans le champ ci-dessus, puis cliquez à nouveau.');
+    return afficherErreur(t('auth.enterEmailFirst'));
   }
   const { error } = await sb.auth.resetPasswordForEmail(adresse, { redirectTo: `${location.origin}/connexion.html` });
   /* Réponse identique dans tous les cas : on ne révèle pas si le compte existe. */
   if (error) console.warn(error);
-  afficherInfo('Si un compte existe avec cette adresse, un lien de réinitialisation vient de partir. Vérifiez aussi vos indésirables.');
+  afficherInfo(t('auth.resetSent'));
 };
 
 /* ------------------------- Retour depuis l'e-mail ------------------------- */
@@ -157,15 +180,15 @@ sb.auth.onAuthStateChange((evenement) => {
   if (evenement === 'PASSWORD_RECOVERY') {
     modeRecuperation = true;
     document.querySelector('.onglets-auth').hidden = true;
-    document.getElementById('titreAuth').textContent = 'Nouveau mot de passe';
-    document.getElementById('sousTitreAuth').textContent = 'Choisissez un mot de passe que vous n\'utilisez nulle part ailleurs.';
+    document.getElementById('titreAuth').textContent = t('auth.newPasswordTitle');
+    document.getElementById('sousTitreAuth').textContent = t('auth.newPasswordText');
     email.closest('.champ').hidden = true;
     document.getElementById('lienOubli').hidden = true;
     force.hidden = false;
     aideMdp.hidden = false;
     mdp.value = '';
     mdp.setAttribute('autocomplete', 'new-password');
-    btn.textContent = 'Enregistrer le mot de passe';
+    btn.textContent = t('auth.savePassword');
     mdp.focus();
   }
 });
@@ -173,13 +196,13 @@ sb.auth.onAuthStateChange((evenement) => {
 async function definirNouveauMotDePasse() {
   const secret = mdp.value;
   if (secret.length < 10 || !/[a-zA-Z]/.test(secret) || !/\d/.test(secret)) {
-    return afficherErreur('10 caractères minimum, avec au moins une lettre et un chiffre.');
+    return afficherErreur(t('prof.passwordHelp'));
   }
   btn.disabled = true;
   const { error } = await sb.auth.updateUser({ password: secret });
   btn.disabled = false;
   if (error) return afficherErreur(messageErreur(error));
-  toast('Mot de passe enregistré');
+  toast(t('prof.passwordUpdated'));
   setTimeout(() => location.replace('/app.html'), 800);
 }
 
@@ -191,4 +214,5 @@ async function definirNouveauMotDePasse() {
   if (data.session && !recuperation) location.replace('/app.html');
 })();
 
+rendreLangues();
 appliquerMode();

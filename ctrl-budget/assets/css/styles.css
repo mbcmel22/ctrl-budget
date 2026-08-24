@@ -138,7 +138,9 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .aide { font-size: .82rem; color: var(--ardoise); margin: 6px 0 0; }
 .erreur-champ { color: var(--corail); font-size: .85rem; margin-top: 6px; }
 .ligne-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.case { display: flex; align-items: flex-start; gap: 10px; font-size: .92rem; color: var(--ardoise); }
+.case { display: flex; align-items: flex-start; gap: 10px; font-size: .92rem; color: var(--ardoise);
+  text-transform: none; letter-spacing: normal; font-weight: 400; line-height: 1.45; }
+.case a { color: var(--encre); font-weight: 600; }
 .case input { width: 18px; height: 18px; min-height: 18px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--encre); }
 
 /* ============================== Cartes ================================== */
@@ -426,6 +428,43 @@ main.app { padding: 28px 0 90px; }
 }
 .suggestion:hover { border-style: solid; border-color: var(--encre); background: var(--brume-2); }
 .suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
+
+/* Sélecteur de mois enrichi */
+.selecteur-label {
+  font-family: var(--display); font-size: .95rem; font-weight: 700; letter-spacing: -.01em;
+  border: none; background: transparent; cursor: pointer; padding: 8px 12px; border-radius: var(--r-xs);
+  min-width: 128px; text-transform: capitalize; color: var(--encre);
+}
+.selecteur-label:hover { background: var(--brume-2); }
+.nav-annee { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 18px; }
+.nav-annee strong { font-family: var(--display); font-size: 1.2rem; }
+.grille-mois { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+.case-mois {
+  border: 1px solid var(--ligne); background: #fff; border-radius: var(--r-sm); padding: 12px 4px;
+  font-family: var(--texte); font-size: .88rem; font-weight: 600; color: var(--encre); cursor: pointer;
+  text-transform: capitalize;
+}
+.case-mois:hover { border-color: var(--encre); }
+.case-mois.actif { background: var(--encre); color: #fff; border-color: var(--encre); }
+.case-mois.aujourdhui:not(.actif) { border-color: var(--menthe); color: var(--menthe); }
+
+/* Sélecteur de langue */
+.barre-langue { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 18px; }
+
+/* Jauge d'objectif */
+.jauge { height: 12px; border-radius: var(--r-full); background: var(--brume-2); overflow: hidden; }
+.jauge i { display: block; height: 100%; border-radius: var(--r-full); transition: width .4s ease; }
+
+/* Règles d'import */
+.regles { margin-top: 16px; border-top: 1px solid var(--ligne); padding-top: 14px; }
+.regles summary {
+  cursor: pointer; font-weight: 600; font-size: .92rem; color: var(--encre); list-style: none;
+  display: flex; align-items: center; gap: 8px;
+}
+.regles summary::before { content: "▸"; color: var(--ardoise); transition: transform .15s ease; }
+.regles[open] summary::before { transform: rotate(90deg); }
+.regles ul { margin: 12px 0 0; padding-left: 18px; color: var(--ardoise); font-size: .88rem; }
+.regles li { margin-bottom: 8px; }
 
 /* Zone de dépôt de fichier */
 .depot {

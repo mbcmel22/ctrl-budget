@@ -1,112 +1,140 @@
 /* Fonctions métier de CTRL Budget : formats, classement automatique,
-   calculs du mois et export. Aucun appel réseau ici. */
+   calculs du mois, épargne et export. Aucun appel réseau ici. */
+
+import { t, localeCourante } from './i18n.js';
+import { arrondiMonetaire } from './devises.js';
+
+/* ============================ Paramètres d'affichage ============================ */
+
+const parametres = { devise: 'EUR' };
+
+export function setDevise(code) {
+  if (code) parametres.devise = code;
+}
+export const deviseCourante = () => parametres.devise;
 
 /* ============================ Formats ============================ */
 
-const euroFmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
-const euroCourt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+export function euro(n) {
+  return new Intl.NumberFormat(localeCourante(), {
+    style: 'currency', currency: parametres.devise
+  }).format(Number(n) || 0);
+}
 
-export const euro = (n) => euroFmt.format(Number(n) || 0);
-export const euroArrondi = (n) => euroCourt.format(Number(n) || 0);
-export const pourcent = (n) => `${(Math.round((Number(n) || 0) * 10) / 10).toString().replace('.', ',')} %`;
+export function euroArrondi(n) {
+  return new Intl.NumberFormat(localeCourante(), {
+    style: 'currency', currency: parametres.devise, maximumFractionDigits: 0
+  }).format(Number(n) || 0);
+}
+
+export function pourcent(n) {
+  return new Intl.NumberFormat(localeCourante(), {
+    style: 'percent', maximumFractionDigits: 1
+  }).format((Number(n) || 0) / 100);
+}
 
 export function dateFr(iso) {
   if (!iso) return '';
-  return new Date(iso + (iso.length === 10 ? 'T12:00:00' : '')).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso + (iso.length === 10 ? 'T12:00:00' : ''))
+    .toLocaleDateString(localeCourante(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /* ============================ Mois ============================ */
 
 export const cleMois = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 export const moisDepuisCle = (cle) => new Date(Number(cle.slice(0, 4)), Number(cle.slice(5, 7)) - 1, 1);
+export const moisCourant = () => cleMois(new Date());
 
 export function libelleMois(cle) {
-  return moisDepuisCle(cle).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return moisDepuisCle(cle).toLocaleDateString(localeCourante(), { month: 'long', year: 'numeric' });
 }
 export function libelleMoisCourt(cle) {
-  return moisDepuisCle(cle).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+  return moisDepuisCle(cle).toLocaleDateString(localeCourante(), { month: 'short' }).replace('.', '');
 }
 export function moisPrecedent(cle, n = 1) {
   const d = moisDepuisCle(cle);
   d.setMonth(d.getMonth() - n);
   return cleMois(d);
 }
+export const moisSuivant = (cle, n = 1) => moisPrecedent(cle, -n);
+
 export function joursDuMois(cle) {
   const d = moisDepuisCle(cle);
   return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
 }
-export function premierJour(cle) { return `${cle}-01`; }
-export function dernierJour(cle) { return `${cle}-${String(joursDuMois(cle)).padStart(2, '0')}`; }
+export const premierJour = (cle) => `${cle}-01`;
+export const dernierJour = (cle) => `${cle}-${String(joursDuMois(cle)).padStart(2, '0')}`;
 
-/* Nombre de mensualités restantes entre le mois affiché et la date de fin. */
+/* Écart en mois entre deux clés, positif si b vient après a. */
+export function ecartMois(a, b) {
+  const da = moisDepuisCle(a);
+  const db = moisDepuisCle(b);
+  return (db.getFullYear() - da.getFullYear()) * 12 + (db.getMonth() - da.getMonth());
+}
+
 export function mensualitesRestantes(cle, dateFin) {
   if (!dateFin) return null;
-  const debut = moisDepuisCle(cle);
-  const fin = new Date(dateFin + 'T12:00:00');
-  const n = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth()) + 1;
-  return Math.max(0, n);
+  return Math.max(0, ecartMois(cle, dateFin.slice(0, 7)) + 1);
 }
 
 /* ============================ Référentiels ============================ */
 
-export const NATURES = {
-  fixe: { libelle: 'Charge fixe', classe: 'tag-fixe' },
-  credit: { libelle: 'Crédit', classe: 'tag-credit' },
-  abonnement: { libelle: 'Abonnement', classe: 'tag-abonnement' },
-  variable: { libelle: 'Variable', classe: 'tag-variable' },
-  epargne: { libelle: 'Épargne', classe: 'tag-epargne' }
+export const NATURES_CLES = ['fixe', 'credit', 'abonnement', 'variable', 'epargne'];
+
+const CLASSE_NATURE = {
+  fixe: 'tag-fixe', credit: 'tag-credit', abonnement: 'tag-abonnement',
+  variable: 'tag-variable', epargne: 'tag-epargne'
 };
 
-export const CATEGORIES = {
-  logement: { libelle: 'Logement', emoji: '🏠', couleur: '#16274a' },
-  energie: { libelle: 'Énergie', emoji: '⚡', couleur: '#2f4d8f' },
-  telecom: { libelle: 'Télécom et internet', emoji: '📶', couleur: '#4d7ac7' },
-  assurance: { libelle: 'Assurances', emoji: '🛡️', couleur: '#6f86b8' },
-  transport: { libelle: 'Transport', emoji: '🚗', couleur: '#17876b' },
-  alimentation: { libelle: 'Alimentation', emoji: '🛒', couleur: '#3aa88a' },
-  sante: { libelle: 'Santé', emoji: '💊', couleur: '#7fc0ac' },
-  loisirs: { libelle: 'Loisirs et sport', emoji: '🎬', couleur: '#8b5fbf' },
-  banque: { libelle: 'Banque et frais', emoji: '🏦', couleur: '#b8820c' },
-  credit: { libelle: 'Crédits', emoji: '🏦', couleur: '#c74436' },
-  impots: { libelle: 'Impôts', emoji: '🧾', couleur: '#8d6e2f' },
-  enfants: { libelle: 'Enfants', emoji: '🧸', couleur: '#d98cb3' },
-  epargne: { libelle: 'Épargne et placements', emoji: '🌱', couleur: '#17876b' },
-  autre: { libelle: 'Autre', emoji: '📦', couleur: '#8d97ad' }
-};
+export const libelleNature = (cle) => t(`nature.${NATURES_CLES.includes(cle) ? cle : 'fixe'}`);
+export const classeNature = (cle) => CLASSE_NATURE[cle] || 'tag-fixe';
 
-export const TYPES_REVENU = {
-  salaire: 'Salaire',
-  prime: 'Prime',
-  aide: 'Aide ou allocation',
-  freelance: 'Activité indépendante',
-  loyer: 'Loyer perçu',
-  autre: 'Autre entrée'
-};
-
-/* ==================== Classement automatique ==================== */
-/* Chaque règle donne une catégorie et une nature par défaut.
-   L'utilisateur peut toujours corriger dans le formulaire. */
-
-const REGLES = [
-  { mots: ['pret', 'prêt', 'credit', 'crédit', 'ech pret', 'echeance', 'financement', 'loa', 'lld', 'cofidis', 'cetelem', 'sofinco', 'younited'], categorie: 'credit', nature: 'credit' },
-  { mots: ['loyer', 'citya', 'foncia', 'syndic', 'copropriete', 'charges locatives', 'taxe habitation'], categorie: 'logement', nature: 'fixe' },
-  { mots: ['vattenfall', 'edf', 'engie', 'total energies', 'ekwateur', 'electricite', 'électricité', 'gaz', 'eau', 'veolia', 'saur', 'suez'], categorie: 'energie', nature: 'fixe' },
-  { mots: ['bouygues', 'orange', 'sfr', 'free', 'sosh', 'red by', 'internet', 'fibre', 'mobile', 'box', 'forfait'], categorie: 'telecom', nature: 'abonnement' },
-  { mots: ['assurance', 'mutuelle', 'prevoyance', 'prévoyance', 'maif', 'macif', 'axa', 'matmut', 'gmf', 'accident', 'habitation', 'automobile', 'auto', 'moto', 'deces', 'décès'], categorie: 'assurance', nature: 'fixe' },
-  { mots: ['netflix', 'spotify', 'deezer', 'disney', 'canal', 'prime video', 'apple', 'youtube', 'claude', 'chatgpt', 'openai', 'adobe', 'icloud', 'abonnement', 'basic fit', 'basicfit', 'salle de sport', 'fitness', 'gym'], categorie: 'loisirs', nature: 'abonnement' },
-  { mots: ['courses', 'alimentation', 'drive', 'carrefour', 'leclerc', 'lidl', 'intermarche', 'auchan', 'super u', 'aldi', 'boulangerie', 'restaurant', 'cantine'], categorie: 'alimentation', nature: 'variable' },
-  { mots: ['sncf', 'essence', 'carburant', 'peage', 'péage', 'parking', 'bus', 'tram', 'navigo', 'train', 'entretien voiture', 'garage'], categorie: 'transport', nature: 'fixe' },
-  { mots: ['epargne', 'épargne', 'livret', 'investir', 'invest', 'pea', 'bourse', 'per', 'assurance vie', 'trade republic', 'boursorama invest'], categorie: 'epargne', nature: 'epargne' },
-  { mots: ['impot', 'impôt', 'taxe', 'urssaf', 'tresor public', 'trésor public'], categorie: 'impots', nature: 'fixe' },
-  { mots: ['cotisation', 'frais bancaire', 'frais de tenue', 'banque', 'carte bancaire', 'agios', 'revolut', 'n26', 'boursorama', 'cm'], categorie: 'banque', nature: 'fixe' },
-  { mots: ['creche', 'crèche', 'nounou', 'ecole', 'école', 'garderie', 'periscolaire', 'pension'], categorie: 'enfants', nature: 'fixe' },
-  { mots: ['pharmacie', 'medecin', 'médecin', 'dentiste', 'osteo', 'kine', 'optique', 'sante', 'santé'], categorie: 'sante', nature: 'variable' }
+export const CATEGORIES_CLES = [
+  'logement', 'energie', 'telecom', 'assurance', 'transport', 'alimentation',
+  'sante', 'loisirs', 'banque', 'credit', 'impots', 'enfants', 'epargne', 'autre'
 ];
 
-const sansAccent = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const COULEURS = {
+  logement: '#16274a', energie: '#2f4d8f', telecom: '#4d7ac7', assurance: '#6f86b8',
+  transport: '#17876b', alimentation: '#3aa88a', sante: '#7fc0ac', loisirs: '#8b5fbf',
+  banque: '#b8820c', credit: '#c74436', impots: '#8d6e2f', enfants: '#d98cb3',
+  epargne: '#17876b', autre: '#8d97ad'
+};
 
-/* La comparaison se fait sur des mots entiers : « automobile » ne doit pas
-   être reconnu comme « mobile », ni « prevoyance » comme « voyage ». */
+const EMOJIS = {
+  logement: '🏠', energie: '⚡', telecom: '📶', assurance: '🛡️', transport: '🚗',
+  alimentation: '🛒', sante: '💊', loisirs: '🎬', banque: '🏦', credit: '🏦',
+  impots: '🧾', enfants: '🧸', epargne: '🌱', autre: '📦'
+};
+
+export function categorie(cle) {
+  const c = CATEGORIES_CLES.includes(cle) ? cle : 'autre';
+  return { cle: c, libelle: t(`cat.${c}`), couleur: COULEURS[c], emoji: EMOJIS[c] };
+}
+
+export const TYPES_REVENU_CLES = ['salaire', 'prime', 'aide', 'freelance', 'loyer', 'autre'];
+export const libelleTypeRevenu = (cle) => t(`rev.${TYPES_REVENU_CLES.includes(cle) ? cle : 'autre'}`);
+
+/* ==================== Classement automatique ==================== */
+
+const REGLES = [
+  { mots: ['pret', 'prêt', 'credit', 'crédit', 'ech pret', 'echeance', 'financement', 'loa', 'lld', 'cofidis', 'cetelem', 'sofinco', 'younited', 'loan', 'mortgage', 'prestamo'], categorie: 'credit', nature: 'credit' },
+  { mots: ['loyer', 'citya', 'foncia', 'syndic', 'copropriete', 'charges locatives', 'taxe habitation', 'rent', 'alquiler'], categorie: 'logement', nature: 'fixe' },
+  { mots: ['vattenfall', 'edf', 'engie', 'total energies', 'ekwateur', 'electricite', 'électricité', 'gaz', 'eau', 'veolia', 'saur', 'suez', 'electricity', 'water', 'luz'], categorie: 'energie', nature: 'fixe' },
+  { mots: ['bouygues', 'orange', 'sfr', 'free', 'sosh', 'red by', 'internet', 'fibre', 'mobile', 'box', 'forfait', 'vodafone', 'movistar'], categorie: 'telecom', nature: 'abonnement' },
+  { mots: ['assurance', 'mutuelle', 'prevoyance', 'prévoyance', 'maif', 'macif', 'axa', 'matmut', 'gmf', 'accident', 'habitation', 'automobile', 'auto', 'moto', 'deces', 'décès', 'insurance', 'seguro'], categorie: 'assurance', nature: 'fixe' },
+  { mots: ['netflix', 'spotify', 'deezer', 'disney', 'canal', 'prime video', 'apple', 'youtube', 'claude', 'chatgpt', 'openai', 'adobe', 'icloud', 'abonnement', 'basic fit', 'basicfit', 'salle de sport', 'fitness', 'gym', 'subscription'], categorie: 'loisirs', nature: 'abonnement' },
+  { mots: ['courses', 'alimentation', 'drive', 'carrefour', 'leclerc', 'lidl', 'intermarche', 'auchan', 'super u', 'aldi', 'boulangerie', 'restaurant', 'cantine', 'groceries', 'mercadona'], categorie: 'alimentation', nature: 'variable' },
+  { mots: ['sncf', 'essence', 'carburant', 'peage', 'péage', 'parking', 'bus', 'tram', 'navigo', 'train', 'entretien voiture', 'garage', 'uber', 'fuel', 'metro'], categorie: 'transport', nature: 'fixe' },
+  { mots: ['epargne', 'épargne', 'livret', 'investir', 'invest', 'pea', 'bourse', 'per', 'assurance vie', 'trade republic', 'savings', 'ahorro'], categorie: 'epargne', nature: 'epargne' },
+  { mots: ['impot', 'impôt', 'taxe', 'urssaf', 'tresor public', 'trésor public', 'tax'], categorie: 'impots', nature: 'fixe' },
+  { mots: ['cotisation', 'frais bancaire', 'frais de tenue', 'banque', 'carte bancaire', 'agios', 'revolut', 'n26', 'boursorama', 'cm', 'bank'], categorie: 'banque', nature: 'fixe' },
+  { mots: ['creche', 'crèche', 'nounou', 'ecole', 'école', 'garderie', 'periscolaire', 'pension', 'school'], categorie: 'enfants', nature: 'fixe' },
+  { mots: ['pharmacie', 'medecin', 'médecin', 'dentiste', 'osteo', 'kine', 'optique', 'sante', 'santé', 'pharmacy', 'doctor'], categorie: 'sante', nature: 'variable' }
+];
+
+export const sansAccent = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 const cacheRegex = new Map();
 function contientMot(texte, mot) {
   const propre = sansAccent(mot);
@@ -118,26 +146,24 @@ function contientMot(texte, mot) {
 }
 
 export function deviner(libelle) {
-  const t = sansAccent(libelle || '');
-  if (!t.trim()) return { categorie: 'autre', nature: 'fixe' };
+  const texte = sansAccent(libelle);
+  if (!texte.trim()) return { categorie: 'autre', nature: 'fixe' };
   for (const regle of REGLES) {
-    if (regle.mots.some((mot) => contientMot(t, mot))) {
+    if (regle.mots.some((mot) => contientMot(texte, mot))) {
       return { categorie: regle.categorie, nature: regle.nature };
     }
   }
   return { categorie: 'autre', nature: 'fixe' };
 }
 
-/* ==================== Validation des saisies ==================== */
+/* ==================== Validation ==================== */
 
-export function nettoyerLibelle(v) {
-  return String(v || '').trim().slice(0, 60);
-}
+export const nettoyerLibelle = (v) => String(v || '').trim().slice(0, 60);
 
 export function montantValide(v) {
   const n = Number(String(v).replace(',', '.'));
   if (!Number.isFinite(n) || n < 0 || n > 1000000) return null;
-  return Math.round(n * 100) / 100;
+  return arrondiMonetaire(n, parametres.devise);
 }
 
 /* ==================== Sélections du mois ==================== */
@@ -161,9 +187,8 @@ export function revenusDuMois(revenus, cle) {
   });
 }
 
-export const somme = (liste, champ = 'montant') => liste.reduce((t, x) => t + Number(x[champ] || 0), 0);
+export const somme = (liste, champ = 'montant') => liste.reduce((total, x) => total + Number(x[champ] || 0), 0);
 
-/* Synthèse complète d'un mois. */
 export function synthese({ charges, revenus, depenses, cle }) {
   const chargesMois = chargesDuMois(charges, cle);
   const revenusMois = revenusDuMois(revenus, cle);
@@ -185,18 +210,51 @@ export function synthese({ charges, revenus, depenses, cle }) {
   const nbJours = joursDuMois(cle);
   const jour = moisEnCours ? aujourdhui.getDate() : nbJours;
   const rythme = jour > 0 ? totalDepenses / jour : 0;
-  const projection = rythme * nbJours;
 
   return {
     chargesMois, revenusMois, depensesMois,
     totalRevenus, totalCharges, totalDepenses, totalCredits, totalAbonnements, totalEpargne,
     resteAVivre, resteReel, tauxEndettement,
-    jour, nbJours, moisEnCours, rythme, projection,
-    budgetJournalier: resteAVivre > 0 ? (resteAVivre - totalDepenses) / Math.max(1, nbJours - jour + 1) : 0
+    jour, nbJours, moisEnCours, rythme,
+    projection: rythme * nbJours,
+    budgetJournalier: (resteAVivre - totalDepenses) / Math.max(1, nbJours - jour + 1)
   };
 }
 
-/* Cumul des dépenses jour par jour, pour la courbe de comparaison. */
+/* ==================== Épargne ==================== */
+
+function premierMoisConnu(charges, mouvements) {
+  const dates = [
+    ...(charges || []).filter((c) => c.nature === 'epargne').map((c) => (c.date_debut || c.created_at || '').slice(0, 7)),
+    ...(mouvements || []).map((m) => (m.date || '').slice(0, 7))
+  ].filter((d) => /^\d{4}-\d{2}$/.test(d)).sort();
+  return dates[0] || null;
+}
+
+/* Reconstitue le solde : solde de départ, versements automatiques issus
+   des charges de nature Épargne pour chaque mois écoulé, puis mouvements
+   manuels. Renvoie aussi la série mensuelle pour le graphique. */
+export function soldeEpargne({ charges, mouvements, initial, jusquA }) {
+  const debut = premierMoisConnu(charges, mouvements) || jusquA;
+  const nbMois = Math.max(0, ecartMois(debut, jusquA));
+  let total = Number(initial) || 0;
+  const serie = [];
+
+  for (let i = nbMois; i >= 0; i--) {
+    const cle = moisPrecedent(jusquA, i);
+    const auto = somme(chargesDuMois(charges, cle).filter((c) => c.nature === 'epargne'));
+    const manuels = (mouvements || [])
+      .filter((m) => (m.date || '').slice(0, 7) === cle)
+      .reduce((acc, m) => acc + Number(m.montant) * (m.sens === 'retrait' ? -1 : 1), 0);
+    total += auto + manuels;
+    serie.push({ cle, auto, manuels, cumul: total });
+  }
+
+  return { total, serie };
+}
+
+/* ==================== Séries pour les graphiques ==================== */
+
 export function cumulParJour(depenses, cle) {
   const n = joursDuMois(cle);
   const parJour = new Array(n).fill(0);
@@ -212,11 +270,11 @@ export function cumulParJour(depenses, cle) {
 export function repartition(lignes) {
   const parCat = new Map();
   lignes.forEach((l) => {
-    const cat = CATEGORIES[l.categorie] ? l.categorie : 'autre';
-    parCat.set(cat, (parCat.get(cat) || 0) + Number(l.montant || 0));
+    const c = categorie(l.categorie);
+    parCat.set(c.cle, (parCat.get(c.cle) || 0) + Number(l.montant || 0));
   });
   return [...parCat.entries()]
-    .map(([cle, montant]) => ({ cle, montant, ...CATEGORIES[cle] }))
+    .map(([cle, montant]) => ({ montant, ...categorie(cle) }))
     .sort((a, b) => b.montant - a.montant);
 }
 
@@ -225,7 +283,6 @@ export function repartition(lignes) {
 export function versCSV(colonnes, lignes) {
   const echapper = (v) => {
     const s = String(v ?? '');
-    /* Le préfixe protège contre l'injection de formule dans un tableur. */
     const sur = /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
     return '"' + sur.replaceAll('"', '""') + '"';
   };
