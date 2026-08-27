@@ -14,6 +14,7 @@ create table if not exists public.profiles (
   epargne_initiale numeric(12,2) not null default 0 check (epargne_initiale >= 0),
   devise text not null default 'EUR' check (char_length(devise) = 3),
   langue text not null default 'fr' check (langue in ('fr','en','es')),
+  derniere_conversion jsonb,
   onboarding_done boolean not null default false,
   created_at timestamptz not null default now()
 );

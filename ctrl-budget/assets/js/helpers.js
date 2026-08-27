@@ -163,7 +163,7 @@ export const nettoyerLibelle = (v) => String(v || '').trim().slice(0, 60);
 export function montantValide(v) {
   const n = Number(String(v).replace(',', '.'));
   if (!Number.isFinite(n) || n < 0 || n > 1000000) return null;
-  return arrondiMonetaire(n, parametres.devise);
+  return arrondiMonetaire(n);
 }
 
 /* ==================== Sélections du mois ==================== */

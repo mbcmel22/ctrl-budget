@@ -546,9 +546,11 @@ main.app { padding: 28px 0 90px; }
   .ligne-champs { grid-template-columns: 1fr; }
   .app-titre { align-items: flex-start; }
   .app-titre > div:last-child, .app-actions { width: 100%; }
-  .selecteur-mois { flex: 1 1 auto; justify-content: space-between; }
-  .selecteur-label { flex: 1 1 auto; min-width: 0; font-size: .9rem; padding: 8px 4px; }
+  /* Le mois occupe sa propre ligne : plus de libellé tronqué. */
+  .selecteur-mois { flex: 1 0 100%; justify-content: space-between; }
+  .selecteur-label { flex: 1 1 auto; min-width: 0; font-size: .95rem; padding: 8px 4px; }
   .app-actions .btn { flex: 1 1 auto; }
+  .app-actions [data-mois-courant] { flex: 0 1 auto; }
   .modale { padding: 22px 18px; max-height: 90vh; }
   .modale .champ { margin-bottom: 12px; }
   .modale .aide { font-size: .78rem; margin-top: 4px; }

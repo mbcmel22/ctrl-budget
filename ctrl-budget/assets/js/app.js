@@ -1,7 +1,7 @@
 import { sb, sessionRequise, deconnexion, messageErreur } from './supabase.js';
 import { toast, ech, ouvrirModale, fermerModale, confirmer } from './ui.js';
 import { t, LANGUES, langueCourante, setLangue } from './i18n.js';
-import { DEVISES, tauxChange } from './devises.js';
+import { listeDevises, nomDevise, tauxChange } from './devises.js';
 import {
   CATEGORIES_CLES, NATURES_CLES, TYPES_REVENU_CLES, categorie, libelleNature, classeNature,
   libelleTypeRevenu, deviner, euro, euroArrondi, pourcent, dateFr, setDevise, deviseCourante,
@@ -487,7 +487,7 @@ function vueProfil() {
       </div>
       <div class="champ">
         <label for="rgDevise">${ech(t('prof.currency'))}</label>
-        <select id="rgDevise">${Object.entries(DEVISES).map(([code, d]) => `<option value="${code}" ${deviseCourante() === code ? 'selected' : ''}>${code} · ${ech(d.libelle)}</option>`).join('')}</select>
+        <select id="rgDevise">${listeDevises().map((d) => `<option value="${d.code}" ${deviseCourante() === d.code ? 'selected' : ''}>${ech(d.code)} · ${ech(d.nom)}</option>`).join('')}</select>
         <p class="aide">${ech(t('prof.currencyHelp'))}</p>
       </div>
     </div>
@@ -860,15 +860,27 @@ async function changerDevise(nouvelle) {
   if (nouvelle === ancienne) return;
 
   const nbLignes = etat.charges.length + etat.revenus.length + etat.depenses.length + etat.epargne.length;
+
+  /* Retour à la devise précédente : on réutilise l'inverse exact du taux
+     appliqué à l'aller, pour retrouver les montants d'origine au centime. */
+  const memo = etat.profil.derniere_conversion || null;
+  const retourEnArriere = Boolean(memo && memo.de === nouvelle && memo.vers === ancienne && Number(memo.taux));
+
   let taux = null;
-  try {
-    taux = await tauxChange(ancienne, nouvelle);
-  } catch (erreur) {
-    console.warn(erreur);
+  if (retourEnArriere) {
+    taux = 1 / Number(memo.taux);
+  } else {
+    try {
+      taux = await tauxChange(ancienne, nouvelle);
+    } catch (erreur) {
+      console.warn(erreur);
+    }
   }
 
   const appliquer = async (convertir) => {
-    await sb.from('profiles').update({ devise: nouvelle }).eq('id', uid());
+    const memoire = convertir && taux && !retourEnArriere ? { de: ancienne, vers: nouvelle, taux } : null;
+    await sb.from('profiles').update({ devise: nouvelle, derniere_conversion: memoire }).eq('id', uid());
+    etat.profil.derniere_conversion = memoire;
     setDevise(nouvelle);
 
     if (convertir && taux) {
@@ -895,7 +907,8 @@ async function changerDevise(nouvelle) {
   }
 
   const fond = ouvrirModale(t('prof.convertTitle'), `
-    <p>${ech(t('prof.convertText', { a: ancienne, b: nouvelle, t: taux.toFixed(4), n: nbLignes }))}</p>
+    <p>${ech(t('prof.convertText', { a: ancienne, b: nouvelle, t: taux < 0.01 ? taux.toExponential(3) : taux.toFixed(4), n: nbLignes }))}</p>
+    ${retourEnArriere ? `<div class="alerte alerte-ok">${ech(t('prof.backToOrigin'))}</div>` : ''}
     <div class="onb-actions">
       <button class="btn btn-secondaire" data-non>${ech(t('prof.convertNo'))}</button>
       <button class="btn btn-principal" data-oui>${ech(t('prof.convertYes'))}</button>

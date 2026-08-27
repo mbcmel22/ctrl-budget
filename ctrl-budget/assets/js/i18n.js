@@ -218,6 +218,7 @@ const DICT = {
   'prof.convertYes': ['Convertir les montants', 'Convert amounts', 'Convertir importes'],
   'prof.convertNo': ['Changer le symbole seulement', 'Change symbol only', 'Cambiar solo el símbolo'],
   'prof.rateError': ['Taux de change indisponible. Le symbole a été changé, les montants sont inchangés.', 'Exchange rate unavailable. The symbol changed, amounts are unchanged.', 'Tipo de cambio no disponible. Se cambió el símbolo, los importes no.'],
+  'prof.backToOrigin': ['Retour à votre devise précédente : le taux exact de la conversion aller est réutilisé, vos montants d\'origine seront rendus au centime près.', 'Back to your previous currency: the exact rate of the first conversion is reused, your original amounts are restored to the cent.', 'Vuelta a tu moneda anterior: se reutiliza el tipo exacto de la primera conversión, tus importes originales se restauran al céntimo.'],
   'prof.converted': ['Montants convertis au taux du jour', 'Amounts converted at today\'s rate', 'Importes convertidos al cambio del día'],
   'prof.security': ['Sécurité', 'Security', 'Seguridad'],
   'prof.securityText': ["Votre mot de passe est stocké sous forme chiffrée par notre prestataire d'authentification, il n'est lisible par personne, pas même par l'éditeur du site.", 'Your password is stored hashed by our authentication provider. Nobody can read it, not even the site owner.', 'Tu contraseña se guarda cifrada por nuestro proveedor de autenticación. Nadie puede leerla, ni el editor del sitio.'],

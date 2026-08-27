@@ -1,81 +1,142 @@
 /* Devises et taux de change.
-   Les taux flottants viennent de l'API Frankfurter, alimentée par les taux
-   de référence de la Banque centrale européenne. Les devises à parité fixe
-   avec l'euro sont converties par leur parité officielle, sans appel réseau.
-   Un cache d'une journée limite les requêtes. */
 
-/* Parités fixes officielles, 1 EUR vaut : */
-const PARITES_FIXES = {
-  XOF: 655.957,   // franc CFA UEMOA
-  XAF: 655.957,   // franc CFA CEMAC
-  XPF: 119.3317   // franc Pacifique
+   Trois sources, dans cet ordre :
+   1. les parités fixes officielles, codées en dur, exactes et hors ligne ;
+   2. l'API Frankfurter, taux de référence de la Banque centrale européenne ;
+   3. l'API open.er-api.com, qui couvre le reste des devises du monde.
+
+   Les noms des devises ne sont pas codés en dur : ils viennent de
+   Intl.DisplayNames, donc traduits automatiquement dans la langue de
+   l'interface. */
+
+import { localeCourante } from './i18n.js';
+
+/* Parités fixes, 1 EUR vaut exactement : */
+const PARITES_EUR = {
+  XOF: 655.957,      // franc CFA, Afrique de l'Ouest
+  XAF: 655.957,      // franc CFA, Afrique centrale
+  XPF: 119.33174,    // franc Pacifique
+  KMF: 491.96775,    // franc comorien
+  CVE: 110.265,      // escudo cap-verdien
+  BAM: 1.95583,      // mark convertible
+  BGN: 1.95583       // lev bulgare
 };
 
-/* Devises cotées quotidiennement par la BCE, donc convertibles en direct. */
-const FLOTTANTES = [
-  'EUR', 'USD', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD', 'JPY', 'CNY', 'HKD', 'SGD',
-  'SEK', 'NOK', 'DKK', 'ISK', 'PLN', 'CZK', 'RON', 'BGN', 'HUF', 'TRY',
-  'BRL', 'MXN', 'INR', 'ZAR', 'KRW', 'ILS', 'THB', 'MYR', 'PHP', 'IDR'
-];
-
-export const DEVISES = {
-  EUR: { libelle: 'Euro', symbole: '€' },
-  USD: { libelle: 'Dollar américain', symbole: '$' },
-  GBP: { libelle: 'Livre sterling', symbole: '£' },
-  CHF: { libelle: 'Franc suisse', symbole: 'CHF' },
-  CAD: { libelle: 'Dollar canadien', symbole: '$ CA' },
-  AUD: { libelle: 'Dollar australien', symbole: '$ AU' },
-  NZD: { libelle: 'Dollar néo-zélandais', symbole: '$ NZ' },
-  JPY: { libelle: 'Yen japonais', symbole: '¥' },
-  CNY: { libelle: 'Yuan chinois', symbole: '¥' },
-  HKD: { libelle: 'Dollar de Hong Kong', symbole: 'HK$' },
-  SGD: { libelle: 'Dollar de Singapour', symbole: 'S$' },
-  SEK: { libelle: 'Couronne suédoise', symbole: 'kr' },
-  NOK: { libelle: 'Couronne norvégienne', symbole: 'kr' },
-  DKK: { libelle: 'Couronne danoise', symbole: 'kr' },
-  ISK: { libelle: 'Couronne islandaise', symbole: 'kr' },
-  PLN: { libelle: 'Zloty polonais', symbole: 'zł' },
-  CZK: { libelle: 'Couronne tchèque', symbole: 'Kč' },
-  RON: { libelle: 'Leu roumain', symbole: 'lei' },
-  BGN: { libelle: 'Lev bulgare', symbole: 'лв' },
-  HUF: { libelle: 'Forint hongrois', symbole: 'Ft' },
-  TRY: { libelle: 'Livre turque', symbole: '₺' },
-  BRL: { libelle: 'Réal brésilien', symbole: 'R$' },
-  MXN: { libelle: 'Peso mexicain', symbole: '$ MX' },
-  INR: { libelle: 'Roupie indienne', symbole: '₹' },
-  ZAR: { libelle: 'Rand sud-africain', symbole: 'R' },
-  KRW: { libelle: 'Won sud-coréen', symbole: '₩' },
-  ILS: { libelle: 'Shekel israélien', symbole: '₪' },
-  THB: { libelle: 'Baht thaïlandais', symbole: '฿' },
-  MYR: { libelle: 'Ringgit malaisien', symbole: 'RM' },
-  PHP: { libelle: 'Peso philippin', symbole: '₱' },
-  IDR: { libelle: 'Roupie indonésienne', symbole: 'Rp' },
-  XOF: { libelle: 'Franc CFA, Afrique de l\'Ouest', symbole: 'F CFA' },
-  XAF: { libelle: 'Franc CFA, Afrique centrale', symbole: 'F CFA' },
-  XPF: { libelle: 'Franc Pacifique', symbole: 'F' }
+/* Parités fixes exprimées en dollars, 1 USD vaut exactement : */
+const PARITES_USD = {
+  AED: 3.6725, SAR: 3.75, QAR: 3.64, OMR: 0.384497, BHD: 0.376, JOD: 0.709,
+  ERN: 15, PAB: 1, BSD: 1, BBD: 2, BZD: 2, XCD: 2.7, AWG: 1.79, CUP: 24,
+  DJF: 177.721, LSL: null, SVC: 8.75
 };
+
+/* Devises cotées quotidiennement par la BCE. */
+const BCE = ['USD', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD', 'JPY', 'CNY', 'HKD', 'SGD',
+  'SEK', 'NOK', 'DKK', 'ISK', 'PLN', 'CZK', 'RON', 'HUF', 'TRY', 'BRL', 'MXN',
+  'INR', 'ZAR', 'KRW', 'ILS', 'THB', 'MYR', 'PHP', 'IDR'];
+
+/* Toutes les devises proposées dans le profil, par code ISO 4217. */
+export const CODES = [
+  'EUR', 'USD', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD', 'JPY', 'CNY', 'HKD', 'TWD', 'SGD',
+  'KRW', 'INR', 'PKR', 'BDT', 'LKR', 'NPR', 'THB', 'VND', 'IDR', 'MYR', 'PHP', 'MMK',
+  'KHR', 'LAK', 'MNT', 'BND', 'MOP', 'MVR', 'AFN', 'BTN',
+  'SEK', 'NOK', 'DKK', 'ISK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'HRK', 'RSD', 'BAM',
+  'MKD', 'ALL', 'MDL', 'UAH', 'BYN', 'RUB', 'GEL', 'AMD', 'AZN', 'TRY', 'CHF',
+  'ILS', 'AED', 'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'JOD', 'LBP', 'IQD', 'IRR', 'YER', 'SYP',
+  'EGP', 'MAD', 'DZD', 'TND', 'LYD', 'SDG', 'ETB', 'KES', 'UGX', 'TZS', 'RWF', 'BIF',
+  'XOF', 'XAF', 'XPF', 'NGN', 'GHS', 'GMD', 'GNF', 'SLE', 'LRD', 'CVE', 'STN', 'KMF',
+  'ZAR', 'BWP', 'NAD', 'ZMW', 'MWK', 'MZN', 'AOA', 'ZWG', 'LSL', 'SZL', 'MGA', 'MUR', 'SCR',
+  'BRL', 'MXN', 'ARS', 'CLP', 'COP', 'PEN', 'UYU', 'PYG', 'BOB', 'VES', 'GTQ', 'HNL',
+  'NIO', 'CRC', 'PAB', 'DOP', 'HTG', 'JMD', 'TTD', 'BBD', 'BSD', 'BZD', 'XCD', 'CUP', 'AWG', 'SRD', 'GYD',
+  'KZT', 'UZS', 'KGS', 'TJS', 'TMT', 'PGK', 'FJD', 'SBD', 'VUV', 'WST', 'TOP', 'NZD'
+].filter((c, i, tab) => tab.indexOf(c) === i);
+
+/* Devises sans subdivision : elles s'affichent sans centimes. */
+export const SANS_DECIMALES = ['BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW',
+  'PYG', 'RWF', 'UGX', 'UYI', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'];
+
+/* Nom localisé de la devise, par le navigateur. */
+export function nomDevise(code) {
+  try {
+    const nom = new Intl.DisplayNames([localeCourante()], { type: 'currency' }).of(code);
+    if (nom && nom !== code) return nom.charAt(0).toUpperCase() + nom.slice(1);
+  } catch (e) { /* le navigateur ne connaît pas ce code */ }
+  return code;
+}
+
+export function listeDevises() {
+  return CODES
+    .map((code) => ({ code, nom: nomDevise(code) }))
+    .sort((a, b) => a.nom.localeCompare(b.nom, localeCourante()));
+}
 
 const CLE_CACHE = 'ctrl-budget-taux';
 
-/* Combien d'unités de cette devise valent 1 euro. */
+function lireCache() {
+  try { return JSON.parse(localStorage.getItem(CLE_CACHE) || '{}'); } catch (e) { return {}; }
+}
+function ecrireCache(cache) {
+  try { localStorage.setItem(CLE_CACHE, JSON.stringify(cache)); } catch (e) { /* stockage plein */ }
+}
+
+let tableComplete = null;
+
+/* Table de secours : tous les taux depuis l'euro, en un seul appel. */
+async function chargerTableComplete() {
+  if (tableComplete) return tableComplete;
+
+  const cache = lireCache();
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  if (cache.table && cache.table.jour === aujourdhui) {
+    tableComplete = cache.table.taux;
+    return tableComplete;
+  }
+
+  const reponse = await fetch('https://open.er-api.com/v6/latest/EUR');
+  if (!reponse.ok) throw new Error('Taux indisponible');
+  const donnees = await reponse.json();
+  if (!donnees?.rates) throw new Error('Taux indisponible');
+
+  tableComplete = donnees.rates;
+  cache.table = { taux: donnees.rates, jour: aujourdhui };
+  ecrireCache(cache);
+  return tableComplete;
+}
+
+/* Combien d'unités de cette devise valent un euro. */
 async function parEuro(code) {
   if (code === 'EUR') return 1;
-  if (PARITES_FIXES[code]) return PARITES_FIXES[code];
-  if (!FLOTTANTES.includes(code)) throw new Error('Devise non convertible');
+  if (PARITES_EUR[code]) return PARITES_EUR[code];
 
-  const cache = JSON.parse(localStorage.getItem(CLE_CACHE) || '{}');
+  const cache = lireCache();
   const aujourdhui = new Date().toISOString().slice(0, 10);
   if (cache[code] && cache[code].jour === aujourdhui) return cache[code].taux;
 
-  const reponse = await fetch(`https://api.frankfurter.app/latest?from=EUR&to=${encodeURIComponent(code)}`);
-  if (!reponse.ok) throw new Error('Taux indisponible');
+  let taux = null;
 
-  const donnees = await reponse.json();
-  const taux = donnees?.rates?.[code];
-  if (!taux || !Number.isFinite(taux)) throw new Error('Taux indisponible');
+  if (BCE.includes(code)) {
+    try {
+      const reponse = await fetch(`https://api.frankfurter.app/latest?from=EUR&to=${encodeURIComponent(code)}`);
+      if (reponse.ok) {
+        const donnees = await reponse.json();
+        if (Number.isFinite(donnees?.rates?.[code])) taux = donnees.rates[code];
+      }
+    } catch (e) { /* on passera par la table complète */ }
+  }
+
+  if (taux === null && PARITES_USD[code]) {
+    const usd = await parEuro('USD');
+    taux = usd * PARITES_USD[code];
+  }
+
+  if (taux === null) {
+    const table = await chargerTableComplete();
+    if (Number.isFinite(table[code])) taux = table[code];
+  }
+
+  if (taux === null) throw new Error('Taux indisponible');
 
   cache[code] = { taux, jour: aujourdhui };
-  localStorage.setItem(CLE_CACHE, JSON.stringify(cache));
+  ecrireCache(cache);
   return taux;
 }
 
@@ -86,9 +147,10 @@ export async function tauxChange(de, vers) {
   return b / a;
 }
 
-export function arrondiMonetaire(valeur, devise) {
-  /* Ces devises ne se divisent pas en centimes. */
-  const sansDecimale = ['JPY', 'HUF', 'KRW', 'IDR', 'XOF', 'XAF', 'XPF', 'ISK'].includes(devise);
-  const facteur = sansDecimale ? 1 : 100;
-  return Math.round(Number(valeur) * facteur) / facteur;
+/* Les montants sont TOUJOURS stockés avec deux décimales, même pour le yen
+   ou le franc CFA. C'est ce qui permet à un aller-retour entre deux devises
+   de rendre exactement les montants d'origine. L'affichage, lui, respecte
+   les usages de chaque devise. */
+export function arrondiMonetaire(valeur) {
+  return Math.round(Number(valeur) * 100) / 100;
 }

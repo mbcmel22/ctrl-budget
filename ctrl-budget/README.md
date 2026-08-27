@@ -20,6 +20,7 @@ ctrl-budget/
 ├── robots.txt
 ├── supabase/schema.sql     tables, contraintes, RLS, suppression de compte
 ├── supabase/migration-v2.sql  à jouer si schema.sql a déjà été exécuté
+├── supabase/migration-v3.sql  mémoire de conversion des devises
 └── assets/
     ├── css/styles.css
     ├── img/                logo, icônes, favicon
@@ -161,7 +162,9 @@ Dans Vercel : **Settings > Domains > Add**. Entrer par exemple `ctrlbudget.fr`, 
 ## 9. Langues, devises et épargne
 
 - L'interface de l'application existe en français, anglais et espagnol. La langue se choisit dès la page de connexion, puis dans Mon profil, et suit le compte d'un appareil à l'autre. Les pages vitrine et légales restent en français, elles renvoient au droit français.
-- La devise se règle dans Mon profil. Le changement propose de convertir tous les montants existants au taux du jour, fourni par l'API Frankfurter qui reprend les taux de référence de la Banque centrale européenne. Refuser la conversion ne change que le symbole et le format d'affichage.
+- La devise se règle dans Mon profil, parmi environ 140 devises. Les noms sont fournis par le navigateur, donc traduits dans la langue choisie.
+- Les taux viennent de trois sources, dans cet ordre : les parités fixes officielles codées en dur (franc CFA, franc Pacifique, mark convertible, lev bulgare, dirham des Émirats et autres monnaies arrimées), puis l'API Frankfurter alimentée par la Banque centrale européenne, puis open.er-api.com pour le reste du monde. Les taux sont mis en cache une journée.
+- Un aller-retour entre deux devises rend les montants d'origine au centime. Le taux appliqué à l'aller est mémorisé et son inverse exact est réutilisé au retour, au lieu du taux du jour qui aurait bougé entre temps. Les montants sont toujours stockés avec deux décimales, même pour le yen, seul l'affichage suit les usages de chaque devise.
 - L'épargne se reconstitue toute seule : solde de départ, plus la somme des charges de nature Épargne pour chaque mois écoulé, plus les versements et retraits saisis à la main. Aucun doublon possible entre les deux mécanismes.
 
 ## 10. Faire évoluer le projet
