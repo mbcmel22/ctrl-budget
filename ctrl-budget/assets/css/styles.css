@@ -329,6 +329,7 @@ main.app { padding: 28px 0 90px; }
 .app-titre h1 { font-size: 1.7rem; margin: 0; }
 .app-titre p { color: var(--ardoise); margin: 4px 0 0; font-size: .92rem; }
 
+.bloc-mois { display: flex; align-items: center; gap: 10px; }
 .selecteur-mois {
   display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
   background: #fff; border: 1px solid var(--ligne); border-radius: var(--r-sm); padding: 4px;
@@ -546,11 +547,12 @@ main.app { padding: 28px 0 90px; }
   .ligne-champs { grid-template-columns: 1fr; }
   .app-titre { align-items: flex-start; }
   .app-titre > div:last-child, .app-actions { width: 100%; }
-  /* Le mois occupe sa propre ligne : plus de libellé tronqué. */
-  .selecteur-mois { flex: 1 0 100%; justify-content: space-between; }
-  .selecteur-label { flex: 1 1 auto; min-width: 0; font-size: .95rem; padding: 8px 4px; }
+  /* Le sélecteur garde la largeur de son contenu et se centre sur sa ligne. */
+  .bloc-mois { flex: 1 0 100%; justify-content: center; }
+  .selecteur-mois { flex: 0 0 auto; }
+  .selecteur-label { flex: 0 0 auto; min-width: 118px; font-size: .95rem; padding: 8px 6px; }
   .app-actions .btn { flex: 1 1 auto; }
-  .app-actions [data-mois-courant] { flex: 0 1 auto; }
+  .bloc-mois .btn { flex: 0 0 auto; }
   .modale { padding: 22px 18px; max-height: 90vh; }
   .modale .champ { margin-bottom: 12px; }
   .modale .aide { font-size: .78rem; margin-top: 4px; }
