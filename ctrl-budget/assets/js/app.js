@@ -97,12 +97,14 @@ function traduireCoquille() {
 function selecteurMois() {
   const courant = etat.mois === moisCourant();
   return `
-  <div class="selecteur-mois">
-    <button data-mois="-1" aria-label="${ech(t('common.prevMonth'))}">‹</button>
-    <button class="selecteur-label" data-choisir-mois aria-label="${ech(t('common.chooseMonth'))}">${ech(libelleMois(etat.mois))}</button>
-    <button data-mois="1" aria-label="${ech(t('common.nextMonth'))}">›</button>
-  </div>
-  ${courant ? '' : `<button class="btn btn-fantome btn-sm" data-mois-courant>↺ ${ech(t('common.thisMonth'))}</button>`}`;
+  <div class="bloc-mois">
+    <div class="selecteur-mois">
+      <button data-mois="-1" aria-label="${ech(t('common.prevMonth'))}">‹</button>
+      <button class="selecteur-label" data-choisir-mois aria-label="${ech(t('common.chooseMonth'))}">${ech(libelleMois(etat.mois))}</button>
+      <button data-mois="1" aria-label="${ech(t('common.nextMonth'))}">›</button>
+    </div>
+    ${courant ? '' : `<button class="btn btn-fantome btn-sm" data-mois-courant>↺ ${ech(t('common.thisMonth'))}</button>`}
+  </div>`;
 }
 
 const titrePage = (titre, sousTitre, droite = '') => `
