@@ -1,4 +1,4 @@
-import { sb, sessionRequise, deconnexion, messageErreur } from './supabase.js';
+import { sb, sessionRequise, deconnexion, messageErreur, colonneManquante } from './supabase.js';
 import { toast, ech, ouvrirModale, fermerModale, confirmer } from './ui.js';
 import { t, LANGUES, langueCourante, setLangue } from './i18n.js';
 import { listeDevises, nomDevise, tauxChange } from './devises.js';
@@ -30,6 +30,36 @@ const uid = () => etat.session.user.id;
 const optionsNature = (sel) => NATURES_CLES.map((k) => `<option value="${k}" ${sel === k ? 'selected' : ''}>${ech(libelleNature(k))}</option>`).join('');
 const optionsCategorie = (sel) => CATEGORIES_CLES.map((k) => { const c = categorie(k); return `<option value="${k}" ${sel === k ? 'selected' : ''}>${ech(c.emoji + ' ' + c.libelle)}</option>`; }).join('');
 const optionsTypeRevenu = (sel) => TYPES_REVENU_CLES.map((k) => `<option value="${k}" ${sel === k ? 'selected' : ''}>${ech(libelleTypeRevenu(k))}</option>`).join('');
+
+/* ====================== Écriture en base ====================== */
+
+/* Colonnes ajoutées par les migrations : si la base ne les connaît pas
+   encore, la ligne est enregistrée sans elles plutôt que perdue. */
+const COLONNES_OPTIONNELLES = ['date_debut', 'derniere_conversion', 'epargne_initiale', 'langue', 'devise'];
+
+async function ecrire(table, donnees, id) {
+  const envoyer = (contenu) => (id
+    ? sb.from(table).update(contenu).eq('id', id)
+    : sb.from(table).insert({ ...contenu, user_id: uid() }));
+
+  let { error } = await envoyer(donnees);
+  if (!error) return null;
+
+  const colonne = colonneManquante(error);
+  if (colonne && Object.prototype.hasOwnProperty.call(donnees, colonne) && COLONNES_OPTIONNELLES.includes(colonne)) {
+    const allege = { ...donnees };
+    delete allege[colonne];
+    const seconde = await envoyer(allege);
+    if (!seconde.error) {
+      toast(t('common.savedWithout', { c: colonne }), 'neutre');
+      return null;
+    }
+    return seconde.error;
+  }
+
+  console.error(`Échec d'écriture sur ${table}`, error);
+  return error;
+}
 
 /* ====================== Chargement ====================== */
 
@@ -417,6 +447,7 @@ function vueEpargne() {
   return `
   ${titrePage(t('nav.savings'), t('sav.subtitle'), `
     ${selecteurMois()}
+    <button class="btn btn-secondaire btn-sm" data-corriger-solde>${ech(t('sav.adjust'))}</button>
     <button class="btn btn-principal btn-sm" data-nouveau-mouvement>${ech(t('sav.newMovement'))}</button>`)}
 
   <div class="grille grille-3" style="margin-bottom:16px">
@@ -593,9 +624,7 @@ function ouvrirCharge(charge) {
     };
 
     e.target.disabled = true;
-    const { error } = charge
-      ? await sb.from('charges').update(donnees).eq('id', charge.id)
-      : await sb.from('charges').insert({ ...donnees, user_id: uid() });
+    const error = await ecrire('charges', donnees, charge?.id);
     e.target.disabled = false;
     if (error) return toast(messageErreur(error), 'ko');
 
@@ -639,9 +668,7 @@ function ouvrirDepense(depense) {
 
     const donnees = { libelle, montant, categorie: q('#dCategorie').value, date };
     e.target.disabled = true;
-    const { error } = depense
-      ? await sb.from('depenses').update(donnees).eq('id', depense.id)
-      : await sb.from('depenses').insert({ ...donnees, user_id: uid() });
+    const error = await ecrire('depenses', donnees, depense?.id);
     e.target.disabled = false;
     if (error) return toast(messageErreur(error), 'ko');
 
@@ -693,9 +720,7 @@ function ouvrirRevenu(revenu) {
     };
 
     e.target.disabled = true;
-    const { error } = revenu
-      ? await sb.from('revenus').update(donnees).eq('id', revenu.id)
-      : await sb.from('revenus').insert({ ...donnees, user_id: uid() });
+    const error = await ecrire('revenus', donnees, revenu?.id);
     e.target.disabled = false;
     if (error) return toast(messageErreur(error), 'ko');
 
@@ -739,14 +764,82 @@ function ouvrirMouvement(mouvement) {
     };
 
     e.target.disabled = true;
-    const { error } = mouvement
-      ? await sb.from('epargne_mouvements').update(donnees).eq('id', mouvement.id)
-      : await sb.from('epargne_mouvements').insert({ ...donnees, user_id: uid() });
+    const error = await ecrire('epargne_mouvements', donnees, mouvement?.id);
     e.target.disabled = false;
     if (error) return toast(messageErreur(error), 'ko');
 
     fermerModale();
     toast(t('common.saved'));
+    await rafraichir();
+  };
+}
+
+/* Corrige l'écart entre le solde calculé et le solde réel du compte :
+   intérêts versés, retrait oublié, erreur de saisie. L'écart devient un
+   mouvement daté, jamais une réécriture de l'historique. */
+function ouvrirCorrectionSolde() {
+  const { total } = etatEpargne();
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const dateDefaut = etat.mois === moisCourant() ? aujourdhui : `${etat.mois}-15`;
+
+  const fond = ouvrirModale(t('sav.adjustTitle'), `
+    <div class="kpi" style="margin-bottom:16px">
+      <p class="label">${ech(t('sav.adjustCurrent'))}</p>
+      <div class="kpi-valeur">${ech(euro(total))}</div>
+    </div>
+    <div class="ligne-champs">
+      <div class="champ">
+        <label for="cReel">${ech(t('sav.adjustReal'))}</label>
+        <input id="cReel" type="number" step="0.01" min="0" inputmode="decimal" value="${ech(total)}">
+      </div>
+      <div class="champ"><label for="cDate">${ech(t('common.date'))}</label><input id="cDate" type="date" value="${ech(dateDefaut)}"></div>
+    </div>
+    <p class="aide" id="cEcart" style="min-height:20px"></p>
+    <p class="aide">${ech(t('sav.adjustHelp'))}</p>
+    <div class="onb-actions">
+      <button class="btn btn-secondaire" data-fermer>${ech(t('common.cancel'))}</button>
+      <button class="btn btn-principal" data-valider>${ech(t('common.save'))}</button>
+    </div>`);
+
+  const q = (sel) => fond.querySelector(sel);
+
+  const ecartCourant = () => {
+    const reel = montantValide(q('#cReel').value);
+    if (reel === null) return null;
+    return Math.round((reel - total) * 100) / 100;
+  };
+
+  const afficherEcart = () => {
+    const ecart = ecartCourant();
+    const zone = q('#cEcart');
+    if (ecart === null) { zone.textContent = t('common.invalidAmount'); return; }
+    if (Math.abs(ecart) < 0.01) { zone.textContent = t('sav.adjustNone'); zone.style.color = 'var(--ardoise)'; return; }
+    zone.textContent = t('sav.adjustGap', { m: (ecart > 0 ? '+ ' : '- ') + euro(Math.abs(ecart)) });
+    zone.style.color = ecart > 0 ? 'var(--menthe)' : 'var(--corail)';
+  };
+
+  q('#cReel').addEventListener('input', afficherEcart);
+  afficherEcart();
+
+  q('[data-valider]').onclick = async (e) => {
+    const ecart = ecartCourant();
+    if (ecart === null) return toast(t('common.invalidAmount'), 'ko');
+    if (Math.abs(ecart) < 0.01) { fermerModale(); return toast(t('sav.adjustNone'), 'neutre'); }
+
+    const donnees = {
+      libelle: ecart > 0 ? t('sav.adjustGain') : t('sav.adjustLoss'),
+      montant: Math.abs(ecart),
+      sens: ecart > 0 ? 'depot' : 'retrait',
+      date: q('#cDate').value || aujourdhui
+    };
+
+    e.target.disabled = true;
+    const error = await ecrire('epargne_mouvements', donnees);
+    e.target.disabled = false;
+    if (error) return toast(messageErreur(error), 'ko');
+
+    fermerModale();
+    toast(t('sav.adjustDone'));
     await rafraichir();
   };
 }
@@ -768,6 +861,7 @@ function ouvrirSoldeInitial() {
     e.target.disabled = true;
     const { error } = await sb.from('profiles').update({ epargne_initiale: montant }).eq('id', uid());
     e.target.disabled = false;
+    if (error) console.error(error);
     if (error) return toast(messageErreur(error), 'ko');
     fermerModale();
     toast(t('common.saved'));
@@ -1004,6 +1098,7 @@ function brancher() {
   brancherUn('[data-nouveau-revenu]', () => ouvrirRevenu(null));
   brancherUn('[data-nouveau-mouvement]', () => ouvrirMouvement(null));
   brancherUn('[data-solde-initial]', ouvrirSoldeInitial);
+  brancherUn('[data-corriger-solde]', ouvrirCorrectionSolde);
   brancherUn('[data-changer-mdp]', ouvrirMotDePasse);
   brancherUn('[data-supprimer-compte]', supprimerCompte);
 
