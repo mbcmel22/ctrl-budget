@@ -128,6 +128,8 @@ const DICT = {
   'charges.active': ['Charge active, à compter dans le budget', 'Active, counted in the budget', 'Activo, se cuenta en el presupuesto'],
   'charges.deleteTitle': ['Supprimer la charge', 'Delete fixed cost', 'Eliminar gasto fijo'],
   'charges.deleteText': ['« {l} » sera retirée de tous vos mois. Pour la garder dans l\'historique, décochez plutôt « charge active ».', '"{l}" will be removed from every month. To keep it in your history, untick "active" instead.', '«{l}» se quitará de todos los meses. Para conservarlo en el historial, desmarca «activo».'],
+  'charges.shownFrom': ['Elle commence en {m}, affichage déplacé sur ce mois.', 'It starts in {m}, the view moved to that month.', 'Empieza en {m}, la vista se movió a ese mes.'],
+  'common.renderError': ["L'affichage a échoué. Voici l'erreur exacte, envoyez-la pour correction :", 'Rendering failed. Here is the exact error, send it for a fix:', 'Falló la visualización. Este es el error exacto, envíalo para corregirlo:'],
   'charges.monthsLeft': ['{n} mensualité(s)', '{n} payment(s) left', '{n} cuota(s)'],
   'charges.endedOn': ['fin {d}', 'ends {d}', 'fin {d}'],
   'charges.from': ['depuis {d}', 'from {d}', 'desde {d}'],

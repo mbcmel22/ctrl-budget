@@ -37,13 +37,24 @@ const optionsTypeRevenu = (sel) => TYPES_REVENU_CLES.map((k) => `<option value="
    encore, la ligne est enregistrée sans elles plutôt que perdue. */
 const COLONNES_OPTIONNELLES = ['date_debut', 'derniere_conversion', 'epargne_initiale', 'langue', 'devise'];
 
+/* Dernière ligne réellement écrite, relue depuis la base. */
+let derniereLigneEcrite = null;
+
+/* Renvoie null et la ligne écrite, ou une erreur exploitable. On demande
+   toujours la ligne en retour : sans elle, impossible de distinguer un
+   enregistrement réussi d'une ligne refusée en silence. */
 async function ecrire(table, donnees, id) {
   const envoyer = (contenu) => (id
-    ? sb.from(table).update(contenu).eq('id', id)
-    : sb.from(table).insert({ ...contenu, user_id: uid() }));
+    ? sb.from(table).update(contenu).eq('id', id).select()
+    : sb.from(table).insert({ ...contenu, user_id: uid() }).select());
 
-  let { error } = await envoyer(donnees);
-  if (!error) return null;
+  const vide = { message: `Aucune ligne enregistrée dans « ${table} ». La base a accepté la requête sans écrire, ce qui vient en général d'une règle RLS incomplète sur cette table.` };
+
+  let { data, error } = await envoyer(donnees);
+  if (!error) {
+    derniereLigneEcrite = data && data[0] ? data[0] : null;
+    return derniereLigneEcrite ? null : vide;
+  }
 
   const colonne = colonneManquante(error);
   if (colonne && Object.prototype.hasOwnProperty.call(donnees, colonne) && COLONNES_OPTIONNELLES.includes(colonne)) {
@@ -51,6 +62,8 @@ async function ecrire(table, donnees, id) {
     delete allege[colonne];
     const seconde = await envoyer(allege);
     if (!seconde.error) {
+      derniereLigneEcrite = seconde.data && seconde.data[0] ? seconde.data[0] : null;
+      if (!derniereLigneEcrite) return vide;
       toast(t('common.savedWithout', { c: colonne }), 'neutre');
       return null;
     }
@@ -94,13 +107,29 @@ async function charger() {
 }
 
 async function rafraichir() {
-  await charger();
+  try {
+    await charger();
+  } catch (erreur) {
+    console.error('Erreur de chargement', erreur);
+    toast(`${t('common.loadError')} ${erreur.message || ''}`.trim(), 'ko');
+  }
   rendre();
 }
 
 /* ====================== Rendu ====================== */
 
 function rendre() {
+  try {
+    rendreVues();
+  } catch (erreur) {
+    console.error('Erreur de rendu', erreur);
+    vue.innerHTML = `<div class="conteneur"><div class="alerte alerte-danger" style="margin-top:20px">
+      ${ech(t('common.renderError'))}<br><code style="font-size:.82rem">${ech(erreur.message || erreur)}</code>
+    </div></div>`;
+  }
+}
+
+function rendreVues() {
   traduireCoquille();
   document.querySelectorAll('.onglet').forEach((b) => {
     if (b.dataset.vue === etat.onglet) b.setAttribute('aria-current', 'page');
@@ -628,8 +657,18 @@ function ouvrirCharge(charge) {
     e.target.disabled = false;
     if (error) return toast(messageErreur(error), 'ko');
 
+    const enregistree = derniereLigneEcrite;
     fermerModale();
     toast(t('common.saved'));
+
+    /* Une charge qui démarre plus tard n'apparaît pas dans le mois affiché :
+       on se place sur son premier mois pour qu'elle soit visible tout de suite. */
+    const debutLigne = (enregistree?.date_debut || '').slice(0, 7);
+    if (debutLigne && debutLigne > etat.mois) {
+      etat.mois = debutLigne;
+      toast(t('charges.shownFrom', { m: libelleMois(debutLigne) }), 'neutre');
+    }
+
     await rafraichir();
   };
 }
