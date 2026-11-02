@@ -617,6 +617,7 @@ function ouvrirCharge(charge) {
       <div class="champ"><label for="fDebut">${ech(t('charges.start'))}</label><input id="fDebut" type="month" value="${ech((c.date_debut || '').slice(0, 7))}"><p class="aide">${ech(t('charges.startHelp'))}</p></div>
       <div class="champ"><label for="fFin">${ech(t('charges.end'))}</label><input id="fFin" type="month" value="${ech((c.date_fin || '').slice(0, 7))}"><p class="aide">${ech(t('charges.endHelp'))}</p></div>
     </div>
+    <div id="fAlertePeriode"></div>
     <div class="champ"><label for="fJour">${ech(t('charges.debitDay'))}</label><input id="fJour" type="number" min="1" max="31" value="${ech(c.jour_prelevement || '')}"></div>
     <label class="case" style="margin-bottom:16px"><input type="checkbox" id="fActif" ${c.actif ? 'checked' : ''}><span>${ech(t('charges.active'))}</span></label>
     <div class="onb-actions">
@@ -625,6 +626,22 @@ function ouvrirCharge(charge) {
     </div>`);
 
   const q = (s) => fond.querySelector(s);
+
+  /* Alerte dès la saisie, avant même de valider. */
+  const verifierPeriode = () => {
+    const debut = q('#fDebut').value;
+    const fin = q('#fFin').value;
+    const zone = q('#fAlertePeriode');
+    if (debut && fin && fin < debut) {
+      zone.innerHTML = `<div class="alerte alerte-danger" style="margin:0 0 14px">${ech(t('charges.endBeforeStart', { d: libelleMois(debut), f: libelleMois(fin) }))}</div>`;
+    } else {
+      zone.innerHTML = '';
+    }
+  };
+  q('#fDebut').addEventListener('change', verifierPeriode);
+  q('#fFin').addEventListener('change', verifierPeriode);
+  verifierPeriode();
+
   let natureModifiee = Boolean(charge);
   q('#fNature').addEventListener('change', () => { natureModifiee = true; });
   q('#fLibelle').addEventListener('input', () => {
@@ -641,6 +658,14 @@ function ouvrirCharge(charge) {
     const jour = Number(q('#fJour').value);
     const debut = q('#fDebut').value;
     const fin = q('#fFin').value;
+
+    /* Une fin antérieure au début rend la charge invisible dans tous les
+       mois : le cas le plus fréquent est une année laissée en arrière
+       dans le sélecteur de mois. On refuse plutôt que d'enregistrer une
+       ligne fantôme. */
+    if (debut && fin && fin < debut) {
+      return toast(t('charges.endBeforeStart', { d: libelleMois(debut), f: libelleMois(fin) }), 'ko');
+    }
 
     const donnees = {
       libelle, montant,
