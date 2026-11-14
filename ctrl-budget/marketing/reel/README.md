@@ -43,3 +43,7 @@ Tous les chiffres sont cohérents entre eux (entrées 2 250 €, charges 1 360,0
 1. Ouvrir `reel.html` dans un navigateur et appeler `frame(t)` dans la console pour voir l'image à la seconde `t`. Les textes et les horaires sont dans les attributs `data-in`, `data-out`, `data-tt`, `data-count`.
 2. Rendu des images : `node scripts/render.js $PWD/reel.html <dossier>`, ce qui produit `part0..3.mp4` et `sfx.json`, la liste des bruitages calée sur l'image.
 3. Son : télécharger la musique dans `<dossier>/dl/music1.mp3`, puis `python3 scripts/audio.py <dossier-parent>`, puis assembler avec ffmpeg (concaténation des parties, `loudnorm=I=-14`).
+
+## Version avec voix off
+
+`ctrl-budget-reel-90s-voix.mp4` : même image, avec la voix off ElevenLabs (texte dans `voix-off.md`). La voix est découpée aux silences entre paragraphes et chaque morceau démarre au début de sa séquence. La musique baisse de 10 dB sous la voix et les bruitages sont plus discrets. Script : `scripts/mix_vo.py` (tableau `SEG` pour décaler un morceau).
