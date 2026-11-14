@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>CTRL Budget, reel 90 s</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=block" rel="stylesheet">
+<style>
+:root{
+  --encre:#16274a;--nuit:#0d1729;--brume:#f5f7fb;--brume2:#eef2f9;--ligne:#e3e8f2;
+  --ardoise:#64708c;--ardoise2:#8d97ad;--menthe:#17876b;--menthe-f:#e6f4ef;--flash:#3ee6a8;
+  --ambre:#b8820c;--ambre-f:#fdf3dd;--corail:#c74436;--corail-f:#fcecea;--jaune:#ffd84d;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;--texte:"Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#000}
+body{font-family:var(--texte);color:var(--encre);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--nuit)}
+.abs{position:absolute}
+[data-in]{visibility:hidden}
+
+/* fond animé */
+#bg{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,#1d3059 0%,#0d1729 60%,#08101e 100%)}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+#grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:60px 60px}
+
+/* barre de progression */
+#prog{position:absolute;left:0;top:0;height:10px;background:linear-gradient(90deg,var(--flash),#7cf0c6);z-index:50;box-shadow:0 0 20px rgba(62,230,168,.7)}
+
+/* textes plein écran */
+.big{font-family:var(--display);font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1.02}
+.center-col{position:absolute;left:70px;right:70px;text-align:center}
+.hl{display:inline-block;background:var(--flash);color:var(--nuit);padding:0 26px 8px;border-radius:24px;transform:rotate(-2deg)}
+.hl-y{display:inline-block;background:var(--jaune);color:var(--nuit);padding:0 18px 6px;border-radius:18px}
+
+/* légendes au-dessus du téléphone */
+.cap{position:absolute;left:60px;right:60px;top:150px;text-align:center}
+.kick{display:inline-block;font:800 30px var(--texte);letter-spacing:.12em;text-transform:uppercase;color:var(--nuit);background:var(--flash);padding:10px 22px;border-radius:999px;margin-bottom:22px}
+.cap h2{font:800 74px/1.02 var(--display);letter-spacing:-.03em;color:#fff}
+.cap h2 em{font-style:normal;color:var(--flash)}
+.cap p{font:600 36px/1.25 var(--texte);color:#b8c3dc;margin-top:16px}
+
+/* téléphone */
+#phone{position:absolute;left:220px;top:540px;width:640px;height:1280px;border-radius:78px;background:#05080f;padding:14px;box-shadow:0 0 0 3px #2a3a5e,0 40px 120px rgba(0,0,0,.6),0 0 160px rgba(62,230,168,.12)}
+#screen{position:relative;width:612px;height:1252px;border-radius:64px;overflow:hidden;background:var(--brume)}
+#scaler{position:absolute;left:0;top:0;width:370px;height:757px;transform:scale(1.65405);transform-origin:0 0}
+.notch{position:absolute;left:50%;top:12px;width:110px;height:32px;margin-left:-55px;background:#05080f;border-radius:20px;z-index:40}
+.sbar{position:absolute;left:0;right:0;top:0;height:46px;background:var(--brume);display:flex;justify-content:space-between;align-items:center;padding:6px 30px 0;font:600 15px var(--texte);color:var(--encre);z-index:30}
+.sbar i{display:inline-block;width:24px;height:11px;border:1.5px solid var(--encre);border-radius:3px;position:relative}
+.sbar i:after{content:"";position:absolute;inset:1.5px;right:5px;background:var(--encre);border-radius:1px}
+.scr{position:absolute;left:0;top:0;width:370px;height:757px;background:var(--brume);overflow:hidden}
+.scr-in{position:absolute;left:0;right:0;top:50px;padding:10px 18px 30px}
+
+/* composants app */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:8px;font:700 17px var(--display);color:var(--encre)}
+.brand img{width:26px;height:auto}
+.h1{font:700 27px/1.1 var(--display);letter-spacing:-.02em;margin:4px 0 6px}
+.sub{font-size:13px;color:var(--ardoise);line-height:1.45}
+.carte{background:#fff;border:1px solid var(--ligne);border-radius:14px;padding:14px;box-shadow:0 1px 2px rgba(13,23,41,.05);margin-top:12px}
+.carte h3{font:700 15px var(--display);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.champ{margin-top:10px}
+.champ label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.inp{height:40px;border:1.5px solid var(--ligne);border-radius:10px;background:#fff;padding:0 12px;display:flex;align-items:center;font-size:14px;color:var(--encre);position:relative}
+.inp.focus{border-color:var(--encre);box-shadow:0 0 0 3px rgba(22,39,74,.12)}
+.caret{display:inline-block;width:1.5px;height:17px;background:var(--encre);margin-left:1px;vertical-align:middle}
+.aide{font-size:11px;color:var(--ardoise);margin-top:5px;line-height:1.4}
+.btn{height:44px;border-radius:12px;background:var(--encre);color:#fff;font:600 14px var(--texte);display:flex;align-items:center;justify-content:center;margin-top:14px;position:relative}
+.btn.sec{background:#fff;color:var(--encre);border:1.5px solid var(--encre)}
+.btn.small{height:32px;padding:0 12px;margin:0;font-size:12.5px;border-radius:9px;display:inline-flex}
+.pressed{filter:brightness(1.25);transform:scale(.96)}
+.tabs{display:flex;background:var(--brume2);border-radius:12px;padding:4px;position:relative;margin:16px 0 14px}
+.tabs span{flex:1;text-align:center;font:600 13px var(--texte);padding:8px 0;position:relative;z-index:2;color:var(--ardoise)}
+.tab-ind{position:absolute;top:4px;width:163px;height:34px;background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:1}
+.check{display:flex;align-items:center;gap:9px;font-size:12.5px;margin-top:12px}
+.box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--ardoise2);background:#fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;position:relative}
+.box b{position:absolute;inset:-1.5px;border-radius:6px;background:var(--menthe);display:flex;align-items:center;justify-content:center}
+.alerte{border-radius:12px;padding:11px 12px;font-size:12px;line-height:1.45;margin-top:12px}
+.a-ok{background:var(--menthe-f);color:#0f5c48;border:1px solid #bfe3d6}
+.a-info{background:#eaf0fb;color:#1d3059;border:1px solid #d3def3}
+.a-ko{background:var(--corail-f);color:#8f2b20;border:1px solid #f3c9c3}
+.a-warn{background:var(--ambre-f);color:#7a5608;border:1px solid #f1dca8}
+.onb-prog{height:6px;background:var(--brume2);border-radius:9px;overflow:hidden;margin:6px 0 10px}
+.onb-prog div{height:100%;background:var(--menthe);border-radius:9px}
+.onb-etape{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ardoise)}
+.drop{border:2px dashed #b7c3dc;border-radius:12px;padding:16px;text-align:center;font-size:12px;color:var(--ardoise);background:#fafbfe;position:relative}
+.drop strong{display:block;color:var(--encre);font-size:13.5px;margin-bottom:3px}
+.drop.on{border-color:var(--menthe);background:var(--menthe-f)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--ligne);font-size:13px;overflow:hidden}
+.row:first-child{border-top:0}
+.row .l{display:flex;flex-direction:column;gap:3px}
+.row .l b{font-weight:600}
+.row .m{font-weight:700;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--brume2);color:var(--ardoise)}
+.b-ab{background:#efe8fd;color:#5b34b8}.b-cr{background:var(--corail-f);color:var(--corail)}.b-fx{background:#e8eefb;color:#1d3e8a}.b-ep{background:var(--menthe-f);color:var(--menthe)}
+.chips{display:flex;gap:8px;margin-top:10px}
+.chip{flex:1;border:1.5px solid var(--ligne);border-radius:10px;padding:6px 10px;background:#fff;font-size:12.5px;position:relative;height:50px}
+.chip small{display:block;font-size:10.5px;color:var(--ardoise);font-weight:600}
+.chip .v{position:absolute;left:10px;top:22px;font-weight:700}
+.chip.glow{border-color:var(--menthe);box-shadow:0 0 0 3px rgba(23,135,107,.18)}
+.kpi{background:#fff;border:1px solid var(--ligne);border-radius:14px;padding:12px 14px;margin-top:10px}
+.kpi .lab{font-size:11.5px;color:var(--ardoise);font-weight:600}
+.kpi .val{font:700 24px var(--display);margin-top:2px;font-variant-numeric:tabular-nums}
+.hero{background:linear-gradient(150deg,#1d3059,#16274a 60%,#0f1d3a);color:#fff;border-radius:18px;padding:16px;margin-top:10px;position:relative;overflow:hidden}
+.hero .lab{font-size:12px;color:#b8c3dc;font-weight:600}
+.hero .val{font:800 44px var(--display);letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(62,230,168,.16);color:#7cf0c6}
+.stack{height:14px;border-radius:9px;overflow:hidden;display:flex;margin-top:14px;background:rgba(255,255,255,.1);position:relative}
+.stack div{height:100%}
+.legend{display:flex;justify-content:space-between;font-size:11px;color:#b8c3dc;margin-top:8px}
+.legend b{display:block;color:#fff;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 .kpi{margin-top:10px}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 26px;box-shadow:0 -10px 40px rgba(13,23,41,.25);z-index:20}
+.dim{position:absolute;inset:0;background:rgba(13,23,41,.45);z-index:19}
+.toast{position:absolute;left:50%;top:60px;margin-left:-70px;width:140px;height:38px;border-radius:12px;background:var(--encre);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;z-index:25}
+.notif{position:absolute;left:10px;right:10px;background:rgba(255,255,255,.92);border-radius:18px;padding:11px 13px;box-shadow:0 10px 30px rgba(13,23,41,.25);z-index:26;display:flex;gap:10px;font-size:12px;line-height:1.4;backdrop-filter:blur(10px)}
+.notif img{width:34px;height:34px;border-radius:9px;background:var(--encre);padding:5px}
+.notif b{display:block;font-size:12px}
+.gauge{height:12px;border-radius:9px;background:var(--brume2);position:relative;margin-top:10px}
+.gauge div{height:100%;border-radius:9px;background:var(--menthe)}
+.gauge i{position:absolute;top:-5px;width:2px;height:22px;background:var(--corail)}
+
+/* badges extérieurs */
+.ext{position:absolute;z-index:45}
+.ext>div{background:#fff;color:var(--encre);font:700 30px var(--texte);padding:18px 26px;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.35);display:flex;align-items:center;gap:14px;white-space:nowrap}
+.ext .ic{width:44px;height:44px;border-radius:12px;background:var(--menthe-f);color:var(--menthe);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800}
+
+/* curseur */
+#cursor{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.95);box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:60;visibility:hidden}
+#ripple{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:4px solid #fff;z-index:59;visibility:hidden}
+
+/* tuiles bonus */
+.tile{position:absolute;width:440px;height:330px;border-radius:36px;background:linear-gradient(160deg,#1f3563,#13254a);border:2px solid rgba(124,240,198,.25);padding:34px;color:#fff;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.tile .t{font:800 84px/1 var(--display);color:var(--flash);letter-spacing:-.03em}
+.tile .d{font:600 34px/1.2 var(--texte);margin-top:18px;color:#dfe6f5}
+.x{display:inline-flex;width:62px;height:62px;border-radius:50%;background:var(--corail);color:#fff;align-items:center;justify-content:center;font:800 40px var(--texte);margin-right:26px;flex:none}
+.prob{position:absolute;left:90px;right:90px;display:flex;align-items:center;font:700 54px/1.1 var(--display);color:#fff}
+.prob span{position:relative}
+.strike{position:absolute;left:-6px;top:52%;height:8px;background:var(--corail);border-radius:6px}
+.ctapill{display:inline-block;font:700 32px var(--texte);color:#fff;border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:12px 26px;margin:8px}
+.ctabtn{display:inline-block;font:800 46px var(--display);color:var(--nuit);background:var(--flash);border-radius:28px;padding:30px 54px;box-shadow:0 0 60px rgba(62,230,168,.55)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div class="blob" id="blob1" style="width:700px;height:700px;background:#2b5bd7"></div>
+  <div class="blob" id="blob2" style="width:600px;height:600px;background:#17876b"></div>
+  <div id="grid"></div>
+  <div id="prog"></div>
+
+  <!-- ===================== 0 - 4 : HOOK ===================== -->
+  <section class="abs" style="inset:0" data-in="0" data-out="4" data-fx="fade" data-xfx="zoomout">
+    <div class="center-col big" style="top:640px;font-size:104px">
+      <span data-in="0.15" data-fx="pop" data-sfx="pop" data-out="1.95">Tu sais</span>
+      <span data-in="0.5" data-fx="pop" data-sfx="pop" data-out="1.95">ce que</span><br>
+      <span data-in="0.9" data-fx="pop" data-sfx="pop" data-out="1.95">tu gagnes.</span>
+    </div>
+    <div class="center-col big" style="top:520px;font-size:96px">
+      <div data-in="2.0" data-fx="up">Mais tu sais<br>ce qu'il te</div>
+      <div data-in="2.35" data-fx="pop" data-sfx="impact" style="font-size:190px;margin-top:20px"><span class="hl">RESTE&nbsp;?</span></div>
+      <div data-in="2.9" data-fx="up" style="font-size:120px;margin-top:50px;color:#7cf0c6;font-variant-numeric:tabular-nums" id="shuffle">000,00 €</div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 - 8 : PROBLEME + LOGO ===================== -->
+  <section class="abs" style="inset:0" data-in="4" data-out="8" data-fx="zoom" data-xfx="zoomout">
+    <div data-in="4" data-out="5.95" data-fx="fade">
+      <div class="center-col big" style="top:470px;font-size:58px;color:#b8c3dc" >Fini les galères :</div>
+      <div class="prob" style="top:640px" data-in="4.15" data-fx="left" data-sfx="swipe"><i class="x">✕</i><span>Le tableur à rallonge<i class="strike" data-w="4.6,0.25,0,105"></i></span></div>
+      <div class="prob" style="top:820px" data-in="4.65" data-fx="left" data-sfx="swipe"><i class="x">✕</i><span>Connecter sa banque<i class="strike" data-w="5.1,0.25,0,105"></i></span></div>
+      <div class="prob" style="top:1000px" data-in="5.15" data-fx="left" data-sfx="swipe"><i class="x">✕</i><span>Le découvert le 25<i class="strike" data-w="5.6,0.25,0,105"></i></span></div>
+    </div>
+    <div class="center-col" style="top:560px" data-in="6.0" data-fx="zoom" data-sfx="ding">
+      <img src="icon-blanc.png" style="width:330px;height:auto">
+      <div class="big" style="font-size:120px;margin-top:30px">CTRL <span style="font-weight:600">Budget</span></div>
+      <div data-in="6.6" data-fx="up" style="font:600 46px/1.3 var(--texte);color:#b8c3dc;margin-top:28px">Ton budget du mois,<br><span class="hl-y" style="font-weight:800">sous contrôle.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== LEGENDES (8 - 82) ===================== -->
+  <div class="cap" data-xfx="none" data-in="8" data-out="17.9" data-fx="up"><span class="kick">Étape 1 · Inscription</span><h2>Crée ton compte<br>en <em>10 secondes</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="18" data-out="20.9" data-fx="up"><span class="kick">Étape 2 · Onboarding</span><h2>L'appli te guide<br><em>pas à pas</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="21" data-out="23.9" data-fx="up"><span class="kick">Import magique</span><h2>Déjà un <em>PDF</em>, <em>Excel</em><br>ou <em>Word</em> ? Glisse-le.</h2></div>
+  <div class="cap" data-xfx="none" data-in="24" data-out="30.9" data-fx="up"><span class="kick">Étape 3 · Entrées d'argent</span><h2>Salaire, primes, aides…</h2><p>Tous les mois ou une seule fois, tu choisis.</p></div>
+  <div class="cap" data-xfx="none" data-in="31" data-out="32.75" data-fx="up"><span class="kick">Étape 4 · Charges fixes</span><h2>Tout ce qui part<br><em>chaque mois</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="32.8" data-out="34.9" data-fx="pop"><span class="kick">Classement auto</span><h2>Tu tapes « Netflix »…<br>→ <em>Abonnement</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="35" data-out="38.9" data-fx="pop"><span class="kick">Classement auto</span><h2>« Prêt voiture »<br>→ <em>Crédit</em> + date de fin</h2></div>
+  <div class="cap" data-xfx="none" data-in="39" data-out="43.9" data-fx="up"><span class="kick">Zéro prise de tête</span><h2>Tout est classé.<br><em>Modifiable en 1 clic.</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="44" data-out="50.9" data-fx="up"><span class="kick">Étape 5 · Le résumé</span><h2>Ton <em>reste à vivre</em>,<br>calculé pour toi</h2></div>
+  <div class="cap" data-xfx="none" data-in="51" data-out="54.4" data-fx="up"><span class="kick">Ton tableau de bord</span><h2>Ce qu'il te reste.<br><em>Vraiment.</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="54.5" data-out="57.9" data-fx="up"><span class="kick">En caisse</span><h2>Une dépense ?<br><em>2 champs.</em> C'est tout.</h2></div>
+  <div class="cap" data-xfx="none" data-in="58" data-out="59.6" data-fx="pop"><span class="kick">En direct</span><h2>Le chiffre bouge<br><em>instantanément</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="59.65" data-out="63.9" data-fx="pop"><span class="kick">Alerte</span><h2>…et il te prévient<br><em>avant</em> le découvert</h2></div>
+  <div class="cap" data-xfx="none" data-in="64" data-out="67.9" data-fx="up"><span class="kick">Graphiques</span><h2>Ce mois-ci <em>vs</em><br>le mois dernier</h2></div>
+  <div class="cap" data-xfx="none" data-in="68" data-out="71.9" data-fx="up"><span class="kick">Répartition</span><h2>Vois enfin <em>où part</em><br>ton argent</h2></div>
+  <div class="cap" data-xfx="none" data-in="72" data-out="75.2" data-fx="up"><span class="kick">Vue crédits</span><h2>Tes crédits :<br><em>quand ça s'arrête</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="75.3" data-out="77.9" data-fx="pop"><span class="kick">Bonne nouvelle</span><h2><em>+281 € / mois</em><br>récupérés en 2029</h2></div>
+  <div class="cap" data-xfx="none" data-in="78" data-out="79.4" data-fx="up"><span class="kick">Épargne</span><h2>Ton épargne se<br><em>calcule toute seule</em></h2></div>
+  <div class="cap" data-xfx="none" data-in="79.5" data-out="82" data-fx="up"><span class="kick">Alertes</span><h2>Des alertes<br><em>vraiment utiles</em></h2></div>
+
+  <!-- ===================== TELEPHONE (8 - 82) ===================== -->
+  <div id="cam" class="abs" style="inset:0;transform-origin:540px 1180px" data-kf='[["z","",[[45.2,1],[45.8,1.3],[48.6,1.3],[49.2,1],[57.95,1],[58.45,1.28],[61.2,1.28],[61.7,1]]],["zy","",[[45.2,0],[45.8,150],[48.6,150],[49.2,0],[57.95,0],[58.45,210],[61.2,210],[61.7,0]]]]'>
+  <div id="phone" data-in="8" data-out="82" data-fx="rise" data-xfx="zoomout" data-d="0.5">
+    <div id="screen"><div class="notch"></div>
+    <div id="scaler">
+      <div class="sbar"><span>9:41</span><span style="display:flex;gap:6px;align-items:center">5G <i></i></span></div>
+
+      <!-- A. Inscription 8 - 18 -->
+      <div class="scr" data-in="8" data-out="18" data-fx="none" data-xfx="slide">
+        <div class="scr-in">
+          <div class="brand"><img src="icon.png">CTRL Budget</div>
+          <div class="tabs"><i class="tab-ind" data-kf='[["left","px",[[8.9,4],[9.15,167]]]]' style="left:4px"></i><span>Se connecter</span><span id="tabCreer">Créer un compte</span></div>
+          <div style="position:relative;height:60px">
+            <div class="abs" data-in="8" data-out="9.1" data-fx="none" data-xfx="none" style="left:0;right:0"><div class="h1">Bon retour</div><div class="sub">Entrez vos identifiants pour retrouver votre tableau de bord.</div></div>
+            <div class="abs" data-in="9.1" data-fx="up" style="left:0;right:0"><div class="h1">Créer votre compte</div><div class="sub">Deux champs, et vous passez à la mise en route de votre budget.</div></div>
+          </div>
+          <div class="champ" style="margin-top:22px"><label>Adresse e-mail</label><div class="inp" id="fMail" data-focus="9.5,10.95"><span data-tt="9.6,1.2" data-text="lea.martin@mail.fr"></span></div></div>
+          <div class="champ"><label>Mot de passe</label><div class="inp" id="fPass" data-focus="11.05,12.4"><span data-tt="11.15,1.1" data-text="●●●●●●●●●●●●"></span><span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--ardoise)">Voir</span></div>
+            <div class="aide">10 caractères minimum, avec au moins une lettre et un chiffre.</div></div>
+          <div class="champ"><label>Prénom</label><div class="inp" id="fPre" data-focus="12.5,13.2"><span data-tt="12.6,0.45" data-text="Léa"></span></div></div>
+          <div class="check" id="fCheck"><span class="box"><b data-in="13.45" data-fx="pop">✓</b></span>J'accepte la politique de confidentialité</div>
+          <div class="btn" id="bCreer"><span data-in="8" data-out="14.15" data-fx="none">Créer un compte</span><span data-in="14.15" data-out="15.1" data-fx="fade" style="position:absolute">Création en cours…</span><span data-in="15.1" data-fx="pop" style="position:absolute">✓ Compte créé</span></div>
+          <div class="alerte a-ok" data-in="15.1" data-fx="up" data-sfx="ding"><b>Compte créé.</b> Ouvrez votre boîte e-mail et cliquez sur le lien de confirmation pour activer votre accès.</div>
+          <div class="aide" style="text-align:center;margin-top:12px">🔒 Votre mot de passe est chiffré à l'inscription. Personne ne peut le lire.</div>
+        </div>
+      </div>
+
+      <!-- B. Onboarding étape 1 + import 18 - 24 -->
+      <div class="scr" data-in="18" data-out="24" data-fx="slide" data-xfx="slide">
+        <div class="scr-in">
+          <div class="onb-etape">Étape 1 sur 4</div>
+          <div class="onb-prog"><div style="width:25%"></div></div>
+          <div class="h1">Bienvenue Léa</div>
+          <div class="sub">Trois minutes pour poser votre budget, et vous n'y reviendrez qu'en cas de changement.</div>
+          <div class="champ"><label>Prénom</label><div class="inp">Léa</div><div class="aide">Utilisé uniquement pour l'accueil de votre tableau de bord.</div></div>
+          <div class="carte"><h3>Vous tenez déjà un fichier ?</h3>
+            <div class="drop" id="dropzone" data-cls="on:20.85,30"><strong>Choisir un fichier</strong>ou glissez-le ici. PDF, Excel, CSV, Word, 5 Mo maximum.</div>
+            <div style="position:relative;height:66px"><div class="alerte a-info abs" data-in="21.0" data-out="22.7" data-fx="up" style="left:0;right:0">Lecture de mon-budget.pdf en cours, cela prend quelques secondes.
+              <div class="gauge" style="height:6px;margin-top:8px"><div data-w="21.0,1.6,3,100"></div></div></div>
+            <div class="alerte a-ok abs" data-in="22.7" data-fx="pop" data-sfx="success" style="font-size:13px;left:0;right:0" ><b>✓ 10 lignes importées</b><br>2 entrées d'argent · 8 charges fixes</div></div>
+          </div>
+          <div class="alerte a-info">Vous n'aurez jamais à connecter votre banque. Vous saisissez vos montants, l'application fait les calculs.</div>
+        </div>
+      </div>
+
+      <!-- C. Entrées 24 - 31 -->
+      <div class="scr" data-in="24" data-out="31" data-fx="slide" data-xfx="slide">
+        <div class="scr-in">
+          <div class="onb-etape">Étape 2 sur 4</div>
+          <div class="onb-prog"><div style="width:50%"></div></div>
+          <div class="alerte a-ok" style="margin-top:4px">10 ligne(s) importée(s) depuis votre fichier. Vérifiez les montants et la nature.</div>
+          <div class="h1" style="margin-top:12px">Vos entrées d'argent</div>
+          <div class="sub">Salaire, primes, aides, revenus complémentaires.</div>
+          <div class="carte">
+            <div class="champ" style="margin-top:0"><label>Libellé</label><div class="inp" style="color:var(--ardoise2)">Ex. : salaire, prime, CAF…</div></div>
+            <div class="chips"><div class="chip" style="border-color:var(--encre)"><small>Fréquence</small><span class="v">Tous les mois</span></div><div class="chip"><small>&nbsp;</small><span class="v" style="color:var(--ardoise)">Un seul mois</span></div></div>
+            <div class="btn sec">Ajouter cette entrée</div>
+          </div>
+          <div class="carte"><h3>Vos entrées <span class="m" data-count="0,2250,25.0,1.3"></span></h3>
+            <div class="row" data-in="25.1" data-fx="left" data-sfx="pop"><div class="l"><b>Salaire</b><span><span class="badge">Tous les mois</span></span></div><span class="m">2 100,00 €</span></div>
+            <div class="row" data-in="25.55" data-fx="left" data-sfx="pop"><div class="l"><b>Prime de fin d'année</b><span><span class="badge">ponctuel décembre</span></span></div><span class="m">150,00 €</span></div>
+          </div>
+          <div class="btn" id="bCont1">Continuer</div>
+        </div>
+      </div>
+
+      <!-- D. Charges 31 - 44 -->
+      <div class="scr" data-in="31" data-out="44" data-fx="slide" data-xfx="slide">
+        <div class="scr-in" data-kf='[["top","px",[[39.6,50],[40.4,-215],[42.6,-215],[43.0,-215]]]]'>
+          <div class="onb-etape">Étape 3 sur 4</div>
+          <div class="onb-prog"><div style="width:75%"></div></div>
+          <div class="h1">Vos charges fixes</div>
+          <div class="sub">La nature est proposée d'après le libellé, corrigez-la si besoin.</div>
+          <div class="carte">
+            <div class="champ" style="margin-top:0"><label>Libellé</label>
+              <div class="inp" id="cLib" style="position:relative" data-focus="31.75,33.05;34.85,35.95"><span data-tt="31.85,0.7" style="position:absolute;left:12px;white-space:nowrap" data-text="Netflix" data-in="31" data-out="34.1" data-fx="none" data-xfx="none"></span><span data-tt="35.0,0.85" style="position:absolute;left:12px;white-space:nowrap" data-text="Prêt voiture" data-in="34.1" data-fx="none"></span></div></div>
+            <div class="chips">
+              <div class="chip" data-cls="glow:32.7,33.6;35.95,36.9"><small>Nature</small>
+                <span class="v" data-in="31" data-out="32.7" data-fx="none" style="color:var(--ardoise)">Charge fixe</span>
+                <span class="v" data-in="32.7" data-out="34.1" data-fx="pop" data-sfx="pop"><span class="badge b-ab" style="font-size:12px">Abonnement</span></span>
+                <span class="v" data-in="34.1" data-out="35.95" data-fx="none" style="color:var(--ardoise)">Charge fixe</span>
+                <span class="v" data-in="35.95" data-fx="pop" data-sfx="pop"><span class="badge b-cr" style="font-size:12px">Crédit</span></span></div>
+              <div class="chip" data-cls="glow:32.7,33.6;35.95,36.9"><small>Catégorie</small>
+                <span class="v" data-in="31" data-out="32.75" data-fx="none" style="color:var(--ardoise)">Autre</span>
+                <span class="v" data-in="32.75" data-out="34.1" data-fx="pop">Loisirs et sport</span>
+                <span class="v" data-in="34.1" data-out="36.0" data-fx="none" style="color:var(--ardoise)">Autre</span>
+                <span class="v" data-in="36.0" data-fx="pop">Crédits</span></div>
+            </div>
+            <div class="chips">
+              <div class="chip"><small>Montant</small><span class="v"><span data-tt="33.15,0.4" style="position:absolute;white-space:nowrap" data-text="13,49 €" data-in="31" data-out="34.1" data-fx="none" data-xfx="none"></span><span data-tt="37.2,0.45" style="position:absolute;white-space:nowrap" data-text="281,02 €" data-in="34.1" data-fx="none"></span></span></div>
+              <div class="chip" data-cls="glow:36.3,37.1"><small>Fin de l'engagement</small><span class="v"><span data-tt="36.35,0.5" data-text="juin 2029"></span></span></div>
+            </div>
+            <div class="btn sec" id="bAddCh">Ajouter cette charge</div>
+          </div>
+          <div class="carte"><h3>Vos charges <span class="m" data-count="1065.50,1078.99,34.2,0.4|1078.99,1360.01,38.2,0.5"></span></h3>
+            <div class="row" data-kf='[["height","px",[[38.1,0],[38.35,46]]]]' style="height:0;padding:0" data-in="38.1" data-fx="fade" data-sfx="pop"><div class="l"><b>Prêt voiture</b><span><span class="badge b-cr">Crédit</span> <span class="badge">fin juin 2029</span></span></div><span class="m">281,02 €</span></div>
+            <div class="row" data-kf='[["height","px",[[34.1,0],[34.35,46]]]]' style="height:0;padding:0" data-in="34.1" data-fx="fade" data-sfx="pop"><div class="l"><b>Netflix</b><span><span class="badge b-ab">Abonnement</span></span></div><span class="m">13,49 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Loyer</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Logement</span></span></div><span class="m">690,00 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Électricité</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Énergie</span></span></div><span class="m">78,00 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Assurance auto</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Assurances</span></span></div><span class="m">52,40 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Mutuelle</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Santé</span></span></div><span class="m">38,00 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Box internet</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Télécom</span></span></div><span class="m">29,99 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Forfait mobile</b><span><span class="badge b-fx">Charge fixe</span> <span class="badge">Télécom</span></span></div><span class="m">15,99 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Spotify</b><span><span class="badge b-ab">Abonnement</span> <span class="badge">fin janv. 2027</span></span></div><span class="m">11,12 €</span></div>
+            <div class="row" style="height:46px;padding:0"><div class="l"><b>Livret A</b><span><span class="badge b-ep">Épargne</span></span></div><span class="m">150,00 €</span></div>
+          </div>
+          <div class="btn" id="bCont2">Continuer</div>
+        </div>
+      </div>
+
+      <!-- E. Récap 44 - 51 -->
+      <div class="scr" data-in="44" data-out="51" data-fx="slide" data-xfx="slide">
+        <div class="scr-in">
+          <div class="onb-etape">Étape 4 sur 4</div>
+          <div class="onb-prog"><div style="width:100%"></div></div>
+          <div class="h1">Votre mois, en résumé</div>
+          <div class="sub">Vous pourrez tout modifier ensuite, rien n'est figé.</div>
+          <div class="grid2">
+            <div class="kpi" data-in="44.4" data-fx="up"><div class="lab">Entrées du mois</div><div class="val" style="font-size:20px;color:var(--menthe)">2 250,00 €</div></div>
+            <div class="kpi" data-in="44.7" data-fx="up"><div class="lab">Charges fixes</div><div class="val" style="font-size:20px;color:var(--corail)">−1 360,01 €</div></div>
+          </div>
+          <div class="hero" data-in="45.1" data-fx="pop" style="padding:20px">
+            <div class="lab">Reste à vivre</div>
+            <div class="val" style="font-size:50px;color:#7cf0c6" data-count="0,889.99,45.3,1.4"></div>
+            <div data-in="46.9" data-fx="up" style="font-size:13px;color:#dfe6f5;margin-top:6px;line-height:1.45">Soit environ <b>29,67 € par jour</b> pour les courses, l'essence et les imprévus.</div>
+          </div>
+          <div class="carte"><div class="champ" style="margin-top:0"><label>Objectif d'épargne mensuel</label><div class="inp" id="fObj" data-focus="47.75,48.6"><span data-tt="47.9,0.4" data-text="150 €"></span></div><div class="aide">Facultatif. Il apparaîtra comme repère sur votre tableau de bord.</div></div></div>
+          <div class="btn" id="bOpen"><span data-in="44" data-out="49.85" data-fx="none">Ouvrir mon tableau de bord</span><span data-in="49.85" data-fx="fade" style="position:absolute">Enregistrement…</span></div>
+        </div>
+      </div>
+
+      <!-- F. Tableau de bord 51 - 72 -->
+      <div class="scr" data-in="51" data-out="72" data-fx="slide" data-xfx="slide">
+        <div class="scr-in" data-kf='[["top","px",[[64.0,50],[64.6,-450],[68.0,-450],[68.6,-640]]]]'>
+          <div class="topbar"><div class="brand"><img src="icon.png">CTRL Budget</div><div class="btn small" id="bDep">+ Dépense</div></div>
+          <div class="h1">Bonjour Léa</div>
+          <div class="sub">Votre mois · novembre 2026</div>
+          <div class="hero">
+            <div class="lab">Reste réel après dépenses</div>
+            <div class="val" data-count="0,477.69,51.5,1.1|477.69,435.19,58.1,0.7"></div>
+            <span class="pill">▼ 8 % de dépenses vs octobre</span>
+            <div class="stack">
+              <div style="background:#5b77b8" data-w="51.5,0.8,0,60.4"></div>
+              <div style="background:#e0a63a" data-w="51.7,0.8,0,18.3|58.1,0.7,18.3,20.2"></div>
+              <div style="background:#3ee6a8" data-w="51.9,0.8,0,21.3|58.1,0.7,21.3,19.4"></div>
+              <i style="position:absolute;left:46.7%;top:-4px;width:3px;height:22px;background:#ff5a4a;border-radius:2px"></i>
+            </div>
+            <div class="legend"><span>Charges fixes<b>1 360 €</b></span><span>Dépensé<b data-count="0,412.30,51.7,0.8|412.30,454.80,58.1,0.7" data-fmt="int"></b></span><span style="text-align:right">Reste<b data-count="0,477.69,51.9,0.8|477.69,435.19,58.1,0.7" data-fmt="int"></b></span></div>
+          </div>
+          <div class="grid2">
+            <div class="kpi"><div class="lab">Budget restant / jour</div><div class="val" style="font-size:21px" data-count="0,28.10,52.2,0.8|28.10,25.60,58.1,0.7"></div><div class="aide" style="margin-top:2px">Il reste 17 jours.</div></div>
+            <div class="kpi" data-cls="kored:58.9,99"><div class="lab">Projection fin de mois</div><div class="val" style="font-size:21px;position:relative;height:30px"><span class="abs" data-in="51" data-out="58.9" data-fx="none" style="color:var(--menthe)">+6,49 €</span><span class="abs" data-in="58.9" data-fx="pop" data-sfx="alert" style="color:var(--corail)">−84,58 €</span></div><div class="aide" style="margin-top:2px">Au rythme actuel.</div></div>
+          </div>
+          <div class="alerte a-ko" data-in="59.4" data-fx="pop" data-kf='[["maxHeight","px",[[59.3,0],[59.6,90]]],["marginTop","px",[[59.3,0],[59.6,10]]],["paddingTop","px",[[59.3,0],[59.6,11]]],["paddingBottom","px",[[59.3,0],[59.6,11]]]]' style="font-size:12.5px;overflow:hidden;max-height:0;margin-top:0;padding-top:0;padding-bottom:0"><b>⚠ À ce rythme, vous finirez le mois avec 84,58 € de trop.</b> Il faudrait rester sous 25,60 € par jour.</div>
+          <div class="grid2">
+            <div class="kpi"><div class="lab">Entrées du mois</div><div class="val" style="font-size:18px">2 250 €</div><div class="aide" style="margin-top:2px">dont 281 € de crédits</div></div>
+            <div class="kpi"><div class="lab">Dépenses courantes</div><div class="val" style="font-size:18px" data-count="412.30,454.80,58.1,0.7" data-fmt="int"></div><div class="aide" style="margin-top:2px">10 saisies</div></div>
+          </div>
+          <div class="carte"><h3 style="font-size:13.5px">Dépenses cumulées, nov. contre oct.</h3>
+            <svg viewBox="0 0 330 170" width="100%" height="170">
+              <g stroke="#e3e8f2" stroke-width="1"><line x1="0" y1="40" x2="330" y2="40"/><line x1="0" y1="85" x2="330" y2="85"/><line x1="0" y1="130" x2="330" y2="130"/></g>
+              <path d="M0,165 L22,158 44,150 66,147 88,135 110,128 132,118 154,112 176,96 198,90 220,78 242,70 264,52 286,44 308,30 330,18" fill="none" stroke="#8d97ad" stroke-width="2.5" stroke-dasharray="6 5" data-dash="64.6,1.6"/>
+              <path d="M0,165 L22,160 44,155 66,151 88,146 110,138 132,133 154,128 176,124 198,121 220,116 242,113 264,109 286,106 308,102" fill="none" stroke="#16274a" stroke-width="3.5" stroke-linecap="round" data-dash="65.0,1.8"/>
+              <line x1="154" y1="0" x2="154" y2="170" stroke="#c74436" stroke-width="2" stroke-dasharray="3 3"/>
+            </svg>
+            <div style="display:flex;gap:14px;font-size:11px;color:var(--ardoise)"><span><b style="color:var(--encre)">━</b> novembre</span><span>┅ octobre</span><span style="color:var(--menthe);font-weight:700;margin-left:auto" data-in="66.9" data-fx="pop" data-sfx="pop">−12 % vs octobre</span></div>
+          </div>
+          <div class="carte"><h3 style="font-size:13.5px">Où part votre argent</h3>
+            <div style="display:flex;align-items:center;gap:14px">
+              <svg viewBox="0 0 120 120" width="140" height="140" style="transform:rotate(-90deg)">
+                <circle cx="60" cy="60" r="44" fill="none" stroke="#eef2f9" stroke-width="20"/>
+                <g id="donut"></g>
+              </svg>
+              <div id="donutLeg" style="font-size:11.5px;line-height:1.75;flex:1"></div>
+            </div>
+          </div>
+          <div class="carte"><h3 style="font-size:13.5px">Prochains prélèvements</h3>
+            <div class="row"><div class="l"><b>Assurance auto</b><span class="aide" style="margin:0">le 15 novembre</span></div><span class="m">52,40 €</span></div>
+            <div class="row"><div class="l"><b>Box internet</b><span class="aide" style="margin:0">le 18 novembre</span></div><span class="m">29,99 €</span></div>
+            <div class="row"><div class="l"><b>Spotify</b><span class="aide" style="margin:0">le 20 novembre</span></div><span class="m">11,12 €</span></div>
+            <div class="row"><div class="l"><b>Prêt voiture</b><span class="aide" style="margin:0">le 25 novembre</span></div><span class="m">281,02 €</span></div>
+            <div class="aide" style="margin-top:6px">Total à venir d'ici la fin du mois : <b>374,53 €</b></div>
+          </div>
+        </div>
+        <!-- feuille Nouvelle dépense -->
+        <div class="dim" data-in="55.15" data-out="57.85" data-fx="fade"></div>
+        <div class="sheet" data-in="55.15" data-out="57.85" data-fx="sheet" data-xfx="sheet" data-d="0.3">
+          <div style="width:40px;height:5px;border-radius:5px;background:var(--ligne);margin:-6px auto 12px"></div>
+          <div class="h1" style="font-size:22px">Nouvelle dépense</div>
+          <div class="champ"><label>Libellé</label><div class="inp focus" id="eLib"><span data-tt="55.6,0.55" data-text="Courses"></span></div></div>
+          <div class="chips">
+            <div class="chip" data-cls="glow:56.25,57"><small>Catégorie</small><span class="v" data-in="55.15" data-out="56.25" data-fx="none" style="color:var(--ardoise)">Autre</span><span class="v" data-in="56.25" data-fx="pop" data-sfx="pop">Alimentation</span></div>
+            <div class="chip" id="eMont" data-cls="glow:56.4,57.1"><small>Montant</small><span class="v"><span data-tt="56.55,0.45" data-text="42,50 €"></span></span></div>
+          </div>
+          <div class="btn" id="bSave">Enregistrer</div>
+        </div>
+        <div class="toast" data-in="57.95" data-out="59.3" data-fx="drop" data-xfx="fade">✓ Enregistré</div>
+      </div>
+
+      <!-- H. Crédits 72 - 78 -->
+      <div class="scr" data-in="72" data-out="78" data-fx="slide" data-xfx="slide">
+        <div class="scr-in">
+          <div class="topbar"><div class="brand"><img src="icon.png">CTRL Budget</div><div class="btn small">+ Dépense</div></div>
+          <div class="h1">Crédits</div>
+          <div class="sub">Ce qui vous reste à payer, et quand cela s'arrête.</div>
+          <div class="grid2">
+            <div class="kpi" data-in="72.3" data-fx="up"><div class="lab">Mensualités du mois</div><div class="val" style="font-size:20px">281,02 €</div><div class="aide">1 crédit en cours</div></div>
+            <div class="kpi" data-in="72.55" data-fx="up"><div class="lab">Reste à rembourser</div><div class="val" style="font-size:20px" data-count="0,8992.64,72.6,1"></div><div class="aide">Selon les dates de fin</div></div>
+          </div>
+          <div class="kpi" data-in="72.9" data-fx="up"><div class="lab">Taux d'endettement</div><div class="val" data-count="0,12.5,73.0,1" data-fmt="pct" style="color:var(--menthe)"></div>
+            <div class="gauge"><div data-w="73.0,1,0,25"></div><i style="left:70%"></i></div>
+            <div class="aide" style="display:flex;justify-content:space-between"><span>0 %</span><span style="color:var(--corail);font-weight:600;margin-left:auto;margin-right:22px">Seuil bancaire : 35 %</span></div></div>
+          <div class="carte" data-in="73.6" data-fx="up"><h3>Vos crédits</h3>
+            <div class="row" style="border:0"><div class="l"><b>Prêt voiture</b><span class="aide" style="margin:0">32 mensualités restantes, jusqu'au 30/06/2029</span></div><span class="m">281,02 €</span></div>
+            <div class="gauge" style="height:8px;margin-top:4px"><div data-w="73.8,0.9,0,58" style="background:var(--encre)"></div></div>
+          </div>
+          <div class="carte" data-in="75.2" data-fx="pop" data-sfx="coin" data-cls="glowcard:75.2,78" style="border-color:var(--menthe)"><h3>Budget libéré à la fin de chaque crédit</h3>
+            <div class="row" style="border:0"><div class="l"><b>juillet 2029</b><span class="aide" style="margin:0">fin de Prêt voiture</span></div><span class="m" style="color:var(--menthe);font-size:16px">+ 281,02 € / mois</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- I. Épargne + alertes 78 - 82 -->
+      <div class="scr" data-in="78" data-out="82" data-fx="slide" data-xfx="none">
+        <div class="scr-in">
+          <div class="topbar"><div class="brand"><img src="icon.png">CTRL Budget</div><div class="btn small">+ Mouvement</div></div>
+          <div class="h1">Épargne</div>
+          <div class="sub">Votre effort d'épargne, mois après mois.</div>
+          <div class="hero">
+            <div class="lab">Épargne totale estimée</div>
+            <div class="val" data-count="0,3450,78.2,1"></div>
+            <span class="pill" data-in="78.9" data-fx="pop" data-sfx="pop">✓ Objectif atteint ce mois</span>
+            <svg viewBox="0 0 320 90" width="100%" height="90" style="margin-top:8px">
+              <path d="M0,82 L32,76 64,72 96,66 128,58 160,55 192,46 224,38 256,30 288,20 320,10" fill="none" stroke="#3ee6a8" stroke-width="3.5" stroke-linecap="round" data-dash="78.3,1.2"/>
+            </svg>
+          </div>
+          <div class="grid2">
+            <div class="kpi"><div class="lab">Versement auto du mois</div><div class="val" style="font-size:19px">150,00 €</div></div>
+            <div class="kpi"><div class="lab">Objectif mensuel</div><div class="val" style="font-size:19px">150,00 €</div></div>
+          </div>
+          <div class="alerte a-info">À ce rythme, vous atteindrez <b>5 250 €</b> dans 12 mois.</div>
+        </div>
+        <div class="notif" style="top:44px" data-in="79.6" data-fx="drop" data-sfx="notif"><img src="icon-blanc.png"><div><b>CTRL Budget · maintenant</b>Fin de 1 charge dans les 3 mois : Spotify. Cela libérera 11,12 € par mois.</div></div>
+        <div class="notif" style="top:128px" data-in="80.4" data-fx="drop" data-sfx="notif"><img src="icon-blanc.png"><div><b>CTRL Budget · maintenant</b>Vous dépensez plus vite que d'habitude. Restez sous 25,60 € par jour.</div></div>
+      </div>
+    </div></div>
+  </div>
+  </div>
+
+  <!-- badges extérieurs (sécurité) -->
+  <div class="ext" style="left:40px;top:1260px" data-in="15.7" data-out="18" data-fx="pop" data-sfx="pop"><div style="transform:rotate(-4deg)"><span class="ic">🔒</span>Mot de passe chiffré</div></div>
+  <div class="ext" style="left:470px;top:1420px" data-in="16.2" data-out="18" data-fx="pop" data-sfx="pop"><div style="transform:rotate(3deg)"><span class="ic">EU</span>Données hébergées en UE</div></div>
+  <div class="ext" style="left:80px;top:1580px" data-in="16.7" data-out="18" data-fx="pop" data-sfx="pop"><div style="transform:rotate(-2deg)"><span class="ic" style="background:var(--corail-f);color:var(--corail)">✕</span>Aucun accès bancaire</div></div>
+
+  <!-- fichier qui vole vers la zone d'import -->
+  <div class="ext" id="fileFly" data-in="19.9" data-out="21.0" data-fx="fade" data-xfx="fade" data-d="0.15" data-kf='[["left","px",[[19.9,1100],[20.8,330]]],["top","px",[[19.9,1500],[20.8,1180]]]]' style="left:1100px;top:1500px"><div style="transform:rotate(-6deg);font-size:28px"><span class="ic" style="background:var(--corail-f);color:var(--corail);font-size:16px">PDF</span>mon-budget.pdf</div></div>
+
+  <!-- ===================== 82 - 86 : BONUS ===================== -->
+  <section class="abs" style="inset:0" data-in="82" data-out="86" data-fx="zoom" data-xfx="zoomout">
+    <div class="center-col big" style="top:250px;font-size:92px" data-in="82.05" data-fx="up">Et en <span class="hl">bonus</span></div>
+    <div class="tile" style="left:80px;top:560px" data-in="82.5" data-fx="pop" data-sfx="pop"><div class="t">FR·EN·ES</div><div class="d">3 langues, synchronisées sur tous tes appareils</div></div>
+    <div class="tile" style="left:560px;top:560px" data-in="83.0" data-fx="pop" data-sfx="pop"><div class="t">140</div><div class="d">devises, au vrai taux de change</div></div>
+    <div class="tile" style="left:80px;top:930px" data-in="83.5" data-fx="pop" data-sfx="pop"><div class="t">CSV</div><div class="d">export de toutes tes données en 1 clic</div></div>
+    <div class="tile" style="left:560px;top:930px" data-in="84.0" data-fx="pop" data-sfx="pop"><div class="t">RGPD</div><div class="d">compte supprimé en 2 clics, données en UE</div></div>
+    <div class="center-col" style="top:1340px;font:700 40px/1.4 var(--texte);color:#b8c3dc" data-in="84.6" data-fx="up">Tes données restent <span class="hl-y">à toi.</span></div>
+  </section>
+
+  <!-- ===================== 86 - 90 : CTA ===================== -->
+  <section class="abs" style="inset:0" data-in="86" data-out="90.5" data-fx="zoom">
+    <div class="center-col" style="top:300px">
+      <img src="icon-blanc.png" style="width:240px;height:auto" data-in="86.05" data-fx="pop" data-sfx="ding">
+      <div class="big" style="font-size:100px;margin-top:20px" data-in="86.3" data-fx="up">Reprends<br>le <span class="hl">contrôle</span><br>ce mois-ci.</div>
+      <div style="margin-top:50px" data-in="87.0" data-fx="up"><span class="ctapill">Gratuit</span><span class="ctapill">Sans carte bancaire</span><br><span class="ctapill">Sans connexion à ta banque</span></div>
+      <div style="margin-top:60px" data-in="87.6" data-fx="pop" data-sfx="pop" id="ctaBtn"><span class="ctabtn">Crée ton compte →<br><span style="font-size:34px;font-weight:700">lien en bio</span></span></div>
+      <div class="big" style="font-size:44px;margin-top:50px;font-weight:600;color:#b8c3dc" data-in="88.2" data-fx="fade">CTRL Budget</div>
+    </div>
+  </section>
+
+  <div id="flash" class="abs" style="inset:0;background:#fff;z-index:70;opacity:0;pointer-events:none"></div>
+  <div id="ripple"></div>
+  <div id="cursor"></div>
+</div>
+
+<script>
+const DUR = 90, FPS = 30;
+const cl = x => Math.max(0, Math.min(1, x));
+const E = {
+  out: x => 1 - Math.pow(1 - x, 3),
+  inout: x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
+  back: x => { const c = 1.9, c3 = c + 1; return 1 + c3 * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
+};
+const nf = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (v, f) => f === 'int' ? Math.round(v).toLocaleString('fr-FR') + ' €' : f === 'pct' ? nf.format(v).replace(/,00$/, '').replace(/0$/, '') + ' %' : nf.format(v) + ' €';
+
+/* ---------- donut ---------- */
+const PARTS = [['Logement', 50.7, '#16274a'], ['Crédits', 20.7, '#c74436'], ['Épargne', 11.0, '#17876b'], ['Assurances, santé', 6.6, '#5b77b8'], ['Énergie', 5.7, '#e0a63a'], ['Télécom', 3.4, '#8d97ad'], ['Abonnements', 1.8, '#7b5bd6']];
+(function () {
+  const C = 2 * Math.PI * 44; let acc = 0, g = '', leg = '';
+  PARTS.forEach(([n, p, c], i) => {
+    g += `<circle cx="60" cy="60" r="44" fill="none" stroke="${c}" stroke-width="20" stroke-dasharray="0 ${C}" stroke-dashoffset="${-acc / 100 * C}" data-arc="${p}" data-i="${i}"/>`;
+    leg += `<div data-in="${68.6 + i * .18}" data-fx="left" style="display:flex;justify-content:space-between"><span><b style="color:${c}">●</b> ${n}</span><b>${String(p).replace('.', ',')} %</b></div>`;
+    acc += p;
+  });
+  document.getElementById('donut').innerHTML = g;
+  document.getElementById('donutLeg').innerHTML = leg;
+})();
+
+/* ---------- parse ---------- */
+const els = [...document.querySelectorAll('[data-in]')].map(el => ({
+  el, i: +el.dataset.in, o: el.dataset.out !== undefined ? +el.dataset.out : 1e9,
+  fx: el.dataset.fx || 'up', xfx: el.dataset.xfx || 'fade', d: +(el.dataset.d || .4)
+}));
+const tts = [...document.querySelectorAll('[data-tt]')].map(el => { const [s, d] = el.dataset.tt.split(',').map(Number); return { el, s, d, txt: el.dataset.text }; });
+const counts = [...document.querySelectorAll('[data-count]')].map(el => ({ el, f: el.dataset.fmt, segs: el.dataset.count.split('|').map(s => s.split(',').map(Number)) }));
+const widths = [...document.querySelectorAll('[data-w]')].map(el => ({ el, segs: el.dataset.w.split('|').map(s => s.split(',').map(Number)) }));
+const dashes = [...document.querySelectorAll('[data-dash]')].map(el => { const [s, d] = el.dataset.dash.split(',').map(Number); const L = el.getTotalLength(); el.style.strokeDasharray = el.getAttribute('stroke-dasharray') ? el.getAttribute('stroke-dasharray') : L; return { el, s, d, L, dashed: !!el.getAttribute('stroke-dasharray') }; });
+const kfs = [...document.querySelectorAll('[data-kf]')].map(el => ({ el, k: JSON.parse(el.dataset.kf) }));
+const clss = [...document.querySelectorAll('[data-cls]')].map(el => { const [c, r] = el.dataset.cls.split(':'); return { el, c, r: r.split(';').map(x => x.split(',').map(Number)) }; });
+const focus = [...document.querySelectorAll('[data-focus]')].map(el => ({ el, r: el.dataset.focus.split(';').map(x => x.split(',').map(Number)) }));
+const arcs = [...document.querySelectorAll('[data-arc]')];
+
+/* ---------- appuis du doigt ---------- */
+const TAPS = [
+  [8.95, '#tabCreer'], [9.5, '#fMail'], [11.05, '#fPass'], [12.5, '#fPre'], [13.4, '#fCheck .box'], [14.1, '#bCreer'],
+  [30.2, '#bCont1'],
+  [31.75, '#cLib'], [33.05, '#cLib'], [33.95, '#bAddCh'], [34.85, '#cLib'], [37.9, '#bAddCh'], [43.3, '#bCont2'],
+  [47.75, '#fObj'], [49.8, '#bOpen'],
+  [55.0, '#bDep'], [55.45, '#eLib'], [56.4, '#eMont'], [57.6, '#bSave']
+];
+const CURSOR_ON = [[8.5, 15.0], [29.7, 30.6], [31.3, 38.4], [42.8, 43.7], [47.3, 50.2], [54.5, 58.0]];
+
+function kfVal(pts, t) {
+  if (t <= pts[0][0]) return pts[0][1];
+  for (let j = 1; j < pts.length; j++) if (t <= pts[j][0]) { const [a, va] = pts[j - 1], [b, vb] = pts[j]; return va + (vb - va) * E.inout(cl((t - a) / (b - a))); }
+  return pts[pts.length - 1][1];
+}
+function fxStyle(fx, k, exit) {
+  const e = exit ? E.inout(k) : (fx === 'pop' ? E.back(k) : E.out(k));
+  switch (fx) {
+    case 'none': return ['', 1, ''];
+    case 'fade': return ['', k, ''];
+    case 'pop': return [`scale(${.4 + .6 * e})`, cl(k * 3), ''];
+    case 'left': return [`translateX(${(1 - e) * 120}px)`, k, ''];
+    case 'drop': return [`translateY(${-(1 - e) * 60}px)`, k, ''];
+    case 'zoom': return [`scale(${1.25 - .25 * e})`, k, `blur(${(1 - k) * 14}px)`];
+    case 'zoomout': return [`scale(${.85 + .15 * e})`, k, `blur(${(1 - k) * 10}px)`];
+    case 'slide': return [exit ? `translateX(${-(1 - e) * 100}%)` : `translateX(${(1 - e) * 100}%)`, 1, ''];
+    case 'sheet': return [`translateY(${(1 - e) * 110}%)`, 1, ''];
+    case 'rise': return [`translateY(${(1 - e) * 900}px) rotate(${(1 - e) * 8}deg)`, 1, ''];
+    default: return [`translateY(${(1 - e) * 50}px)`, k, ''];
+  }
+}
+
+function render(t) {
+  // fond
+  document.getElementById('blob1').style.transform = `translate(${-200 + Math.sin(t * .4) * 160}px,${-150 + Math.cos(t * .3) * 120}px)`;
+  document.getElementById('blob2').style.transform = `translate(${620 + Math.cos(t * .35) * 180}px,${1300 + Math.sin(t * .45) * 160}px)`;
+  document.getElementById('prog').style.width = (t / DUR * 100) + '%';
+
+  for (const x of els) {
+    const vis = t >= x.i && t < x.o + (x.xfx === 'none' ? 0 : x.d * .75);
+    x.el.style.visibility = vis ? 'inherit' : 'hidden';
+    if (!vis) continue;
+    let tf = '', op = 1, fl = '';
+    if (t < x.i + x.d) [tf, op, fl] = fxStyle(x.fx, cl((t - x.i) / x.d), false);
+    else if (t >= x.o) [tf, op, fl] = fxStyle(x.xfx, 1 - cl((t - x.o) / (x.d * .75)), true);
+    x.el.style.transform = tf; x.el.style.opacity = op; x.el.style.filter = fl;
+  }
+  for (const x of tts) {
+    const n = Math.floor(x.txt.length * cl((t - x.s) / x.d));
+    const typing = t >= x.s - .05 && t < x.s + x.d + .5;
+    x.el.innerHTML = x.txt.slice(0, n).replace(/ /g, '&nbsp;') + (typing && Math.floor(t * 3) % 2 === 0 ? '<i class="caret"></i>' : '');
+  }
+  for (const x of counts) {
+    let v = x.segs[0][0];
+    for (const [a, b, s, d] of x.segs) if (t >= s) v = a + (b - a) * E.out(cl((t - s) / d));
+    x.el.textContent = fmt(v, x.f);
+  }
+  for (const x of widths) {
+    let v = x.segs[0][2];
+    for (const [s, d, a, b] of x.segs) if (t >= s) v = a + (b - a) * E.out(cl((t - s) / d));
+    x.el.style.width = v + '%';
+  }
+  for (const x of dashes) {
+    const k = E.inout(cl((t - x.s) / x.d));
+    if (x.dashed) { x.el.style.clipPath = `inset(0 ${(1 - k) * 100}% 0 0)`; }
+    else x.el.style.strokeDashoffset = x.L * (1 - k);
+  }
+  for (const x of kfs) {
+    const v = {};
+    for (const [p, u, pts] of x.k) { if (p === 'z' || p === 'zy') v[p] = kfVal(pts, t); else x.el.style[p] = kfVal(pts, t) + u; }
+    if ('z' in v) x.el.style.transform = `translateY(${v.zy || 0}px) scale(${v.z})`;
+  }
+  for (const x of clss) {
+    const on = x.r.some(([a, b]) => t >= a && t < b);
+    if (x.c === 'kored') x.el.style.background = on ? 'var(--corail-f)' : '';
+    else if (x.c === 'glowcard') x.el.style.boxShadow = on ? `0 0 0 ${3 + 3 * Math.sin(t * 8)}px rgba(23,135,107,.25)` : '';
+    else x.el.classList.toggle(x.c, on);
+  }
+  for (const x of focus) x.el.classList.toggle('focus', x.r.some(([a, b]) => t >= a && t < b));
+  // donut
+  const C = 2 * Math.PI * 44; let acc = 0;
+  arcs.forEach((a, i) => { const p = +a.dataset.arc; const k = E.out(cl((t - 68.6 - acc / 100 * 1.4) / (p / 100 * 1.4 + .05))); a.setAttribute('stroke-dasharray', `${k * p / 100 * C} ${C}`); acc += p; });
+
+  // hook : chiffres qui défilent
+  const sh = document.getElementById('shuffle');
+  if (t < 4) {
+    if (t < 3.6) { const r = n => Math.floor((Math.sin(t * 97.13 + n * 13.7) * .5 + .5) * 10); sh.textContent = `${r(1)}${r(2)}${r(3)},${r(4)}${r(5)} €`; sh.style.color = '#7cf0c6'; }
+    else { sh.textContent = '???,?? €'; }
+  }
+  // flash blanc sur les grosses coupes
+  let f = 0; for (const c of [2.0, 6.0, 86.0]) if (t >= c && t < c + .25) f = Math.max(f, .7 * (1 - (t - c) / .25));
+  document.getElementById('flash').style.opacity = f;
+
+  // pressed
+  document.querySelectorAll('.pressed').forEach(e => e.classList.remove('pressed'));
+  for (const [tt, sel] of TAPS) if (t >= tt && t < tt + .15) document.querySelector(sel)?.classList.add('pressed');
+
+  // pulse CTA
+  const cta = document.querySelector('#ctaBtn .ctabtn');
+  if (t > 88.1) cta.style.transform = `scale(${1 + .04 * Math.sin((t - 88.1) * Math.PI * 2)})`;
+}
+
+/* positions des appuis, mesurées une fois */
+let TAPPOS = [];
+function measureTaps() {
+  TAPPOS = TAPS.map(([tt, sel]) => { render(tt); const r = document.querySelector(sel).getBoundingClientRect(); return [tt, r.left + r.width / 2, r.top + r.height / 2]; });
+}
+function cursorAt(t) {
+  const c = document.getElementById('cursor'), rp = document.getElementById('ripple');
+  const on = CURSOR_ON.find(([a, b]) => t >= a && t < b);
+  if (!on) { c.style.visibility = rp.style.visibility = 'hidden'; return; }
+  let x = 900, y = 1650, prev = null, next = null;
+  for (const p of TAPPOS) { if (p[0] <= t) prev = p; else { next = p; break; } }
+  if (prev) { x = prev[1]; y = prev[2]; }
+  if (next && next[0] - t < .45) { const k = E.inout(1 - (next[0] - t) / .45); const sx = prev ? prev[1] : 900, sy = prev ? prev[2] : 1650; x = sx + (next[1] - sx) * k; y = sy + (next[2] - sy) * k; }
+  const fade = Math.min(cl((t - on[0]) / .25), cl((on[1] - t) / .25));
+  c.style.visibility = 'visible'; c.style.left = x + 'px'; c.style.top = y + 'px'; c.style.opacity = fade;
+  const pressed = prev && t - prev[0] < .4;
+  c.style.transform = pressed && t - prev[0] < .12 ? 'scale(.8)' : 'scale(1)';
+  if (pressed) { const k = (t - prev[0]) / .4; rp.style.visibility = 'visible'; rp.style.left = prev[1] + 'px'; rp.style.top = prev[2] + 'px'; rp.style.transform = `scale(${1 + k * 1.6})`; rp.style.opacity = 1 - k; }
+  else rp.style.visibility = 'hidden';
+}
+
+/* liste des effets sonores, synchronisée avec l'image */
+function sfxList() {
+  const L = [];
+  for (const x of els) if (x.el.dataset.sfx) L.push([x.i, x.el.dataset.sfx]);
+  for (const [tt] of TAPS) L.push([tt, 'tap']);
+  for (const x of tts) for (let j = 0; j < x.txt.length; j++) L.push([x.s + x.d * (j + .5) / x.txt.length, 'key']);
+  for (const c of [4, 8, 18, 24, 31, 44, 51, 64, 68, 72, 78, 82, 86]) L.push([c - .12, 'whoosh']);
+  for (const c of [39.6, 55.1, 57.75]) L.push([c, 'swipe']);
+  L.push([0.45, 'riser'], [20.0, 'swipe'], [58.15, 'coin'], [46.7, 'cash'], [89.0, 'end']);
+  return L.sort((a, b) => a[0] - b[0]);
+}
+
+window.frame = t => { render(t); cursorAt(t); };
+window.ready = (async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => { }))); measureTaps(); render(0); return true; })();
+window.sfxList = sfxList;
+</script>
+</body>
+</html>
